@@ -17,7 +17,7 @@ out_srvyr <- dstrata %>%
 test_that(
   "survey_mean gets correct values for factors with single grouped surveys",
   expect_equal(c(out_survey[[1]], sqrt(diag(attr(out_survey, "var")))[[1]]),
-               c(out_srvyr[[1, 2]], out_srvyr[[1, 3]])))
+               c(out_srvyr[[2]][[1]], out_srvyr[[3]][[1]])))
 
 test_that("survey_mean preserves factor levels",
           expect_equal(levels(apistrat$awards), levels(out_srvyr$awards)))
@@ -55,8 +55,8 @@ out_srvyr <- dstrata %>%
   summarize(tot = survey_total())
 
 test_that("survey_* preserves factor levels when calculating a statistic (1 grp)",
-          expect_true(class(out_srvyr$stype) == "factor" &
-                        all(levels(out_srvyr$stype) == c("H", "E", "M")))
+          expect_true(class(out_srvyr$stype2) == "factor" &
+                        all(levels(out_srvyr$stype2) == c("H", "E", "M")))
           )
 
 out_srvyr <- dstrata %>%
@@ -65,7 +65,7 @@ out_srvyr <- dstrata %>%
   summarize(tot = survey_total())
 
 test_that("survey_* preserves character when calculating a statistic (1 grp)",
-          expect_true(class(out_srvyr$stype) == "character")
+          expect_true(class(out_srvyr$stype2) == "character")
 )
 
 out_srvyr <- dstrata %>%
@@ -74,8 +74,8 @@ out_srvyr <- dstrata %>%
   summarize(tot = survey_total())
 
 test_that("survey_* preserves factor levels when calculating a statistic (multi grps)",
-          expect_true(class(out_srvyr$stype) == "factor" &
-                        all(levels(out_srvyr$stype) == c("H", "E", "M")))
+          expect_true(class(out_srvyr$stype2) == "factor" &
+                        all(levels(out_srvyr$stype2) == c("H", "E", "M")))
 )
 
 out_srvyr <- dstrata %>%
@@ -84,5 +84,28 @@ out_srvyr <- dstrata %>%
   summarize(tot = survey_total())
 
 test_that("survey_* preserves character when calculating a statistic (multi grps)",
-          expect_true(class(out_srvyr$stype) == "character")
+          expect_true(class(out_srvyr$stype2) == "character")
 )
+
+
+# confidence intervals
+out_survey_mn <- svymean(~awards, dstrata)
+out_survey_tot <- svytotal(~awards, dstrata)
+out_survey <- dplyr::data_frame(
+  awards = factor(c("No", "Yes")),
+  pct = as.numeric(out_survey_mn),
+  pct_low = as.numeric(confint(out_survey_mn)[, 1]),
+  pct_upp = as.numeric(confint(out_survey_mn)[, 2]),
+  tot = as.numeric(out_survey_tot),
+  tot_low = as.numeric(confint(out_survey_tot)[, 1]),
+  tot_upp = as.numeric(confint(out_survey_tot)[, 2])
+)
+
+out_srvyr <- dstrata %>%
+  group_by(awards) %>%
+  summarize(pct = survey_mean(vartype = "ci"),
+            tot = survey_total(vartype = "ci"))
+
+test_that(
+  "survey_mean and survey_total work with cis",
+  expect_equal(out_srvyr, out_survey))
