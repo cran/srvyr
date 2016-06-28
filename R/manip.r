@@ -1,6 +1,6 @@
 #' @export
 mutate_.tbl_svy <- function(.data, ..., .dots) {
-  dots <- lazyeval::all_dots(.dots, ..., all_named = FALSE)
+  dots <- lazyeval::all_dots(.dots, ..., all_named = TRUE)
 
   if (any(names2(dots) %in% as.character(survey_vars(.data)))) {
     stop("Cannot modify survey variable")
