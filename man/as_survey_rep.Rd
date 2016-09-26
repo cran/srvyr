@@ -5,6 +5,7 @@
 \alias{as_survey_rep.data.frame}
 \alias{as_survey_rep.survey.design2}
 \alias{as_survey_rep.svyrep.design}
+\alias{as_survey_rep.tbl_sql}
 \alias{as_survey_rep.tbl_svy}
 \alias{as_survey_rep_}
 \title{Create a tbl_svy survey object using replicate weights}
@@ -16,9 +17,15 @@ as_survey_rep(.data, ...)
   "bootstrap", "other"), combined_weights = TRUE, rho = NULL,
   bootstrap_average = NULL, scale = NULL, rscales = NULL, fpc = NULL,
   fpctype = c("fraction", "correction"),
-  mse = getOption("survey.replicates.mse"), ...)
+  mse = getOption("survey.replicates.mse"), uid = NULL, ...)
 
 \method{as_survey_rep}{svyrep.design}(.data, ...)
+
+\method{as_survey_rep}{tbl_sql}(.data, variables = NULL, repweights = NULL,
+  weights = NULL, type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
+  "other"), combined_weights = TRUE, rho = NULL, bootstrap_average = NULL,
+  scale = NULL, rscales = NULL, fpc = NULL, fpctype = c("fraction",
+  "correction"), mse = getOption("survey.replicates.mse"), uid = NULL, ...)
 
 \method{as_survey_rep}{survey.design2}(.data, type = c("auto", "JK1", "JKn",
   "BRR", "bootstrap", "subbootstrap", "mrbbootstrap", "Fay"), rho = 0,
@@ -34,7 +41,7 @@ as_survey_rep_(.data, variables = NULL, repweights = NULL, weights = NULL,
   type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "other"),
   combined_weights = TRUE, rho = NULL, bootstrap_average = NULL,
   scale = NULL, rscales = NULL, fpc = NULL, fpctype = c("fraction",
-  "correction"), mse = getOption("survey.replicates.mse"))
+  "correction"), mse = getOption("survey.replicates.mse"), uid = NULL)
 }
 \arguments{
 \item{.data}{A data frame (which contains the variables specified below)}
@@ -65,6 +72,9 @@ weights have been averaged, gives the number of iterations averaged over.}
 \item{mse}{if \code{TRUE}, compute varainces based on sum of squares
 around the point estimate, rather than the mean of the replicates}
 
+\item{uid}{Required for databases only, variables that uniquely identify the
+observations of your survey.}
+
 \item{compress}{if \code{TRUE}, store replicate weights in compressed form
 (if converting from design)}
 }
@@ -87,6 +97,11 @@ it will turn it into a srvyr object, so that srvyr functions will work with it
 If provided a survey design (\code{survey.design2} or \code{tbl_svy}), it is a wrapper
 around \code{\link[survey]{as.svrepdesign}}, and will convert from a survey design to
 replicate weights.
+
+There is also limited and experimental support for databases using dplyr's \code{tbl_sql}
+objects. Not all operations are available for these objects. See
+\code{vignette("databases", package = "dplyr")} for more information on setting up
+databases in dplyr.
 }
 \examples{
 # Examples from ?survey::svrepdesign()

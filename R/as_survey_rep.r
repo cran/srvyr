@@ -15,6 +15,11 @@
 #' around \code{\link[survey]{as.svrepdesign}}, and will convert from a survey design to
 #' replicate weights.
 #'
+#' There is also limited and experimental support for databases using dplyr's \code{tbl_sql}
+#' objects. Not all operations are available for these objects. See
+#' \code{vignette("databases", package = "dplyr")} for more information on setting up
+#' databases in dplyr.
+#'
 #' @export
 #' @param .data A data frame (which contains the variables specified below)
 #' @param variables Variables to include in the design (default is all)
@@ -31,6 +36,8 @@
 #' @param fpc,fpctype Finite population correction information
 #' @param mse if \code{TRUE}, compute varainces based on sum of squares
 #' around the point estimate, rather than the mean of the replicates
+#' @param uid Required for databases only, variables that uniquely identify the
+#' observations of your survey.
 #' @param ... ignored
 #' @param compress if \code{TRUE}, store replicate weights in compressed form
 #' (if converting from design)
@@ -70,16 +77,17 @@ as_survey_rep.data.frame <-
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
-           mse = getOption("survey.replicates.mse"), ...) {
+           mse = getOption("survey.replicates.mse"), uid = NULL, ...) {
     if (!missing(variables)) variables <- helper(lazy_parent(variables), .data)
     if (!missing(repweights)) repweights <- helper(lazy_parent(repweights), .data)
     if (!missing(weights)) weights <- helper(lazy_parent(weights), .data)
     if (!missing(fpc)) fpc <- helper(lazy_parent(fpc), .data)
+    if (!missing(uid)) uid <- helper(lazy_parent(uid), .data)
 
     as_survey_rep_(.data, variables, repweights,
                    weights, type, combined_weights,
                    rho, bootstrap_average, scale, rscales,
-                   fpc, fpctype, mse)
+                   fpc, fpctype, mse, uid)
   }
 
 #' @export
@@ -87,6 +95,11 @@ as_survey_rep.data.frame <-
 as_survey_rep.svyrep.design <- function(.data, ...) {
   as_tbl_svy(.data)
 }
+
+#' @export
+#' @rdname as_survey_rep
+as_survey_rep.tbl_sql <- as_survey_rep.data.frame
+
 
 #' @export
 #' @rdname as_survey_rep
@@ -131,29 +144,35 @@ as_survey_rep_ <-
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
-           mse = getOption("survey.replicates.mse")) {
+           mse = getOption("survey.replicates.mse"), uid = NULL) {
 
-
-    # Need to convert to data.frame to appease survey package and also not
-    # send NULL to dplyr::select
-    survey_selector <- function(x) {
-      if (!is.null(x)) data.frame(dplyr::select_(.data, .dots = x)) else NULL
+    # Databases require uid
+    if (inherits(.data, "tbl_lazy")) {
+      # Databases require uid
+      if (missing(uid) || is.null(uid)) {
+        stop("Database backed surveys require a uid.")
+      } else {
+        uid_names <- get_uid_names(length(uid))
+        .data <- uid_rename(.data, uid, uid_names)
+        attr(.data, "order_var") <- uid_names
+      }
     }
+
     out <- survey::svrepdesign(
       data = .data,
-      variables = survey_selector(variables),
-      repweights = survey_selector(repweights),
-      weights = nullable(as.matrix, survey_selector(weights)[[1]]),
+      variables = survey_selector(.data, variables),
+      repweights = survey_selector(.data, repweights),
+      weights = nullable(as.matrix, survey_selector(.data, weights)[[1]]),
       type = match.arg(type),
       combined.weights = combined_weights,
       rho = rho,
       bootstrap.average = bootstrap_average,
       scale = scale,
       rscales = rscales,
-      fpc = survey_selector(fpc),
+      fpc = survey_selector(.data, fpc),
       fpctype = fpctype,
       mse = mse)
 
     as_tbl_svy(out, list(repweights = repweights,  weights = weights,
-                         fpc = fpc))
+                         fpc = fpc), uid = survey_selector(.data, uid))
   }

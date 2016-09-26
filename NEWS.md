@@ -1,3 +1,8 @@
+# srvyr 0.1.2.999
+* Added support for database backed surveys, using dplyr's handling of
+DBI. Because of problems interacting with the survey package twophase designs 
+do not work. 
+
 # srvyr 0.1.2
 * Fixed a problem with confidence levels not being passed into quantiles
 

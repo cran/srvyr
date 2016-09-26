@@ -7,6 +7,8 @@
 #' \code{\link[dplyr]{select}}. \code{as_survey_twophase_} is the standard
 #' evaluation counterpart to \code{as_survey_twophase}.
 #'
+#' Database objects are not supported for twophase designs.
+#'
 #' @export
 #' @param .data A data frame (which contains the variables specified below)
 #' @param id list of two sets of variable names for sampling unit identifers
@@ -99,14 +101,6 @@ as_survey_twophase.twophase2 <- function(.data, ...) {
 as_survey_twophase_ <- function(.data, id, strata = NULL, probs = NULL,
                              weights = NULL, fpc = NULL, subset,
                              method = c("full", "approx", "simple")) {
-  # survey::twophase doesn't work with values, needs to be formula of
-  # variable names
-  # Change list of variable names to formulas
-  list_to_formula <- function(x) {
-    if (!is.null(x)) {
-      lapply(x, function(y) nullable(survey::make.formula, y))
-    } else NULL
-  }
 
   out <- survey::twophase(data = .data,
                           id = list_to_formula(id),
@@ -120,3 +114,10 @@ as_survey_twophase_ <- function(.data, id, strata = NULL, probs = NULL,
   as_tbl_svy(out, list(ids = id, strata = strata, probs = probs,
                        weights = weights, fpc = fpc, subset = subset))
 }
+
+#' @rdname as_survey_twophase
+as_survey_twophase.tbl_sql <- function(...) {
+  stop("Twophase surveys don't support databases")
+}
+
+

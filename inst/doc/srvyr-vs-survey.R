@@ -35,6 +35,10 @@ strat_design_survey <- svydesign(~1, strata = ~stype, fpc = ~fpc,
                                  weight = ~pw, data = apistrat)
 
 ## ---- message = FALSE----------------------------------------------------
+# simple random sample (again)
+srs_design_srvyr2 <- apisrs %>% as_survey(ids = 1, fpc = fpc)
+
+## ---- message = FALSE----------------------------------------------------
 strat_design_srvyr <- strat_design_srvyr %>%
   mutate(api_diff = api00 - api99) %>%
   rename(api_students = api.stu)
@@ -65,6 +69,17 @@ strat_design_srvyr %>%
 
 # Using survey
 svyby(~api_diff >= 0, ~stype, strat_design_survey, svytotal)
+
+## ---- message = FALSE----------------------------------------------------
+# Using srvyr
+srs_design_srvyr %>%
+  group_by(awards) %>%
+  summarize(proportion = survey_mean(),
+            total = survey_total())
+
+# Using survey
+svymean(~awards, srs_design_survey)
+svytotal(~awards, srs_design_survey)
 
 ## ---- message = FALSE----------------------------------------------------
 # Using srvyr
@@ -101,9 +116,11 @@ summary(glm)
 ## ---- message = FALSE----------------------------------------------------
 srs_design_srvyr <- apisrs %>% as_survey_design_(ids = "1", fpc = "fpc")
 
+grouping_var <- "stype"
+
 strat_design_srvyr %>%
-  group_by_("stype") %>%
-  summarize_(api_increase = "survey_total(api_diff >= 0)",
+  group_by_(grouping_var) %>% # You can use a character variable 
+  summarize_(api_increase = "survey_total(api_diff >= 0)", # or a string
              api_decrease = "survey_total(api_diff < 0)")
 
 

@@ -296,8 +296,18 @@ survey_ratio_tbl_svy <- function(.svy, numerator, denominator, na.rm = FALSE,
 
   vartype <- c("coef", vartype)
   if (deff) vartype <- c(vartype, "deff")
+  if (inherits(numerator, "tbl_sql")) numerator <- ordered_collect(numerator)[[1]]
+  if (inherits(denominator, "tbl_sql")) denominator <- ordered_collect(denominator)[[1]]
 
-  stat <- survey::svyratio(data.frame(numerator), data.frame(denominator),
+  if (inherits(.svy, "twophase2")) {
+    .svy$phase1$sample$variables <- data.frame(SRVYR_VAR_NUM = numerator,
+                                               SRVYR_VAR_DEN = denominator)
+  } else {
+    .svy$variables <- data.frame(SRVYR_VAR_NUM = numerator,
+                                 SRVYR_VAR_DEN = denominator)
+  }
+
+  stat <- survey::svyratio(~SRVYR_VAR_NUM, ~SRVYR_VAR_DEN,
                            .svy, na.rm = na.rm, deff = deff, df = df)
 
   out <- get_var_est(stat, vartype, level = level, df = df)
@@ -310,27 +320,44 @@ survey_ratio_grouped_svy <- function(.svy, numerator, denominator,
                                      level = 0.95, deff = FALSE,
                                      df = survey::degf(.svy)) {
 
-  grps <- survey::make.formula(groups(.svy))
+  grp_names <- as.character(groups(.svy))
 
-  # svyby breaks when you feed it raw vector to be measured... Add it to
-  # the data.frame with mutate and then pass in the name
-  .svy$variables[["___numerator"]] <- numerator
-  .svy$variables[["___denominator"]] <- denominator
+  if (inherits(numerator, "tbl_sql")) {
+    # Since we're grouped, dplyr conveniently gives us groups and x.
+    numerator <- ordered_collect(numerator)
+    denominator <- ordered_collect(denominator)
 
-  # Slight hack for twophase -- move the created variables to where survey
-  # expects them
-  if (inherits(.svy, "twophase2")) {
-    .svy$phase1$sample$variables <- .svy$variables
+    grps <- select(numerator, dplyr::one_of(grp_names))
+
+    numerator <- ungroup(numerator) # need to ungroup to drop the groups
+    numerator <- select(numerator, -dplyr::one_of(grp_names))
+    numerator <- numerator[[1]] # Get the column as a vector instead of as a tbl_df
+
+    denominator <- ungroup(denominator) # need to ungroup to drop the groups
+    denominator <- select(denominator, -dplyr::one_of(grp_names))
+    denominator <- denominator[[1]] # Get the column as a vector instead of as a tbl_df
+  } else {
+    grps <- select_(.svy$variables, .dots = grp_names)
   }
 
-  stat <- survey::svyby(~`___numerator`, grps, .svy, survey::svyratio,
-                        denominator = ~`___denominator`,
+  new_vars <- data.frame(dplyr::bind_cols(grps,
+                                          data.frame(SRVYR_VAR_NUM = numerator,
+                                                     SRVYR_VAR_DEN = denominator)))
+  if (inherits(.svy, "twophase2")) {
+    .svy$phase1$sample$variables <- new_vars
+  } else {
+    .svy$variables <- new_vars
+  }
+
+  stat <- survey::svyby(~SRVYR_VAR_NUM, survey::make.formula(grp_names),
+                        .svy, survey::svyratio,
+                        denominator = ~SRVYR_VAR_DEN,
                         na.rm = na.rm, ci = TRUE, deff = deff)
 
   vartype <- c("grps", "coef", vartype)
   if (deff) vartype <- c(vartype, "deff")
 
-  out <- get_var_est(stat, vartype, grps = as.character(groups(.svy)),
+  out <- get_var_est(stat, vartype, grps = grp_names,
                      level = level, df = df)
 
   dplyr::bind_cols(out)
@@ -376,7 +403,8 @@ survey_ratio_grouped_svy <- function(.svy, numerator, denominator,
 survey_quantile <- function(x, quantiles, na.rm = FALSE,
                             vartype = c("none", "se", "ci"),
                             level = 0.95, q_method = "linear", f = 1,
-                            interval_type = c("Wald", "score", "betaWald"),
+                            interval_type = c("Wald", "score", "betaWald",
+                                              "probability", "quantile"),
                             ties = c("discrete", "rounded"), df = Inf, ...) {
   args <- list(...)
   if (!".svy" %in% names(args)) {
@@ -386,7 +414,8 @@ survey_quantile <- function(x, quantiles, na.rm = FALSE,
   .svy <- args[[".svy"]]
   if (missing(vartype)) vartype <- "none"
   vartype <- match.arg(vartype, several.ok = TRUE)
-  if (missing(interval_type)) interval_type <- "Wald"
+  if (missing(interval_type) & !inherits(.svy, "svyrep.design")) interval_type <- "Wald"
+  if (missing(interval_type) & inherits(.svy, "svyrep.design")) interval_type <- "probability"
   interval_type <- match.arg(interval_type, several.ok = TRUE)
   if (missing(ties)) ties <- "discrete"
   ties <- match.arg(ties, several.ok = TRUE)
@@ -411,10 +440,11 @@ survey_quantile_tbl_svy <- function(.svy, x, quantiles, na.rm = FALSE,
                                     vartype = c("none", "se", "ci"),
                                     level = 0.95, q_method = "linear", f = 1,
                                     interval_type = c("Wald", "score",
-                                                      "betaWald"),
+                                                      "betaWald", "probability",
+                                                      "quantile"),
                                     ties = c("discrete", "rounded"),
                                     df = Inf) {
-
+  if(missing(vartype)) vartype <- "none"
   vartype <- setdiff(vartype, "none")
   vartype <- c("coef", vartype)
 
@@ -424,7 +454,15 @@ survey_quantile_tbl_svy <- function(.svy, x, quantiles, na.rm = FALSE,
   # we could go higher, but I worry about 32bit vs 64bit systems)
   alpha = round(1 - level, 7)
 
-  stat <- survey::svyquantile(data.frame(x), .svy,
+  if (inherits(x, "tbl_sql")) x <- ordered_collect(x)[[1]]
+
+  if (inherits(.svy, "twophase2")) {
+    .svy$phase1$sample$variables <- data.frame(SRVYR_VAR = x)
+  } else {
+    .svy$variables <- data.frame(SRVYR_VAR = x)
+  }
+
+  stat <- survey::svyquantile(~SRVYR_VAR, .svy,
                               quantiles = quantiles, na.rm = na.rm,
                               ci = TRUE, alpha = alpha, method = q_method, f = f,
                               interval.type = interval_type, ties = ties, df = df)
@@ -442,7 +480,9 @@ survey_quantile_grouped_svy <- function(.svy, x, quantiles, na.rm = FALSE,
                                         level = 0.95, q_method = "linear",
                                         f = 1,
                                         interval_type = c("Wald", "score",
-                                                          "betaWald"),
+                                                          "betaWald",
+                                                          "probability",
+                                                          "quantile"),
                                         ties = c("discrete", "rounded"),
                                         df = Inf) {
 
@@ -455,15 +495,23 @@ survey_quantile_grouped_svy <- function(.svy, x, quantiles, na.rm = FALSE,
     remove_se <- FALSE
   }
 
+  grp_names <- as.character(groups(.svy))
+  if (inherits(x, "tbl_sql")) {
+    # Since we're grouped, dplyr conveniently gives us groups and x.
+    x <- ordered_collect(x)
 
-  grps <- survey::make.formula(groups(.svy))
+    grps <- select(x, dplyr::one_of(grp_names))
+    x <- ungroup(x) # need to ungroup to drop the groups
+    x <- select(x, -dplyr::one_of(grp_names))
+    x <- x[[1]] # Get the column as a vector instead of as a tbl_df
+  } else {
+    grps <- select_(.svy$variables, .dots = grp_names)
+  }
 
-  .svy$variables[["___arg"]] <- x
-
-  # Slight hack for twophase -- move the created variables to where survey
-  # expects them
   if (inherits(.svy, "twophase2")) {
-    .svy$phase1$sample$variables <- .svy$variables
+    .svy$phase1$sample$variables <- data.frame(dplyr::bind_cols(grps, data.frame(SRVYR_VAR = x)))
+  } else {
+    .svy$variables <- data.frame(dplyr::bind_cols(grps, data.frame(SRVYR_VAR = x)))
   }
 
   # Because of machine precision issues, 1 - 0.95 != 0.05...
@@ -472,7 +520,8 @@ survey_quantile_grouped_svy <- function(.svy, x, quantiles, na.rm = FALSE,
   # we could go higher, but I worry about 32bit vs 64bit systems)
   alpha = round(1 - level, 7)
 
-  stat <- survey::svyby(formula = ~`___arg`, grps, .svy, survey::svyquantile,
+  stat <- survey::svyby(formula = ~SRVYR_VAR, survey::make.formula(grp_names),
+                        .svy, survey::svyquantile,
                         quantiles = quantiles, na.rm = na.rm,
                         ci = TRUE, alpha = alpha, method = q_method,
                         f = f, interval.type = interval_type, ties = ties,
@@ -484,7 +533,7 @@ survey_quantile_grouped_svy <- function(.svy, x, quantiles, na.rm = FALSE,
   vartype[vartype == "ci"] <- "ci-prop"
 
   out <- get_var_est(stat, vartype, var_names = q_text,
-                     grps = as.character(groups(.svy)), level = level,
+                     grps = grp_names, level = level,
                      quantile = TRUE)
 
   dplyr::bind_cols(out)
@@ -497,7 +546,8 @@ survey_median <- function(x, na.rm = FALSE,
                           vartype = c("none", "se", "ci"),
                           level = 0.95, q_method = "linear", f = 1,
                           interval_type = c("Wald", "score",
-                                            "betaWald"),
+                                            "betaWald", "probability",
+                                            "quantile"),
                           ties = c("discrete", "rounded"), df = Inf,
                           ...) {
 
@@ -509,7 +559,8 @@ survey_median <- function(x, na.rm = FALSE,
   .svy <- args[[".svy"]]
   if (missing(vartype)) vartype <- "none"
   vartype <- match.arg(vartype, several.ok = TRUE)
-  if (missing(interval_type)) interval_type <- "Wald"
+  if (missing(interval_type) & !inherits(.svy, "svyrep.design")) interval_type <- "Wald"
+  if (missing(interval_type) & inherits(.svy, "svyrep.design")) interval_type <- "probability"
   interval_type <- match.arg(interval_type, several.ok = TRUE)
   if (missing(ties)) ties <- "discrete"
   ties <- match.arg(ties, several.ok = TRUE)
@@ -564,12 +615,19 @@ unweighted <- function(x, ...) {
 
 
 survey_stat_ungrouped <- function(.svy, func, x, na.rm, vartype, level, deff, df) {
+  if (inherits(x, "tbl_sql")) x <- ordered_collect(x)[[1]]
   if (class(x) == "factor") {
     stop(paste0("Factor not allowed in survey functions, should ",
                 "be used as a grouping variable"))
   }
   if (class(x) == "logical") x <- as.integer(x)
-  stat <- func(data.frame(x), .svy, na.rm = na.rm, deff = deff)
+
+  if (inherits(.svy, "twophase2")) {
+    .svy$phase1$sample$variables <- data.frame(SRVYR_VAR = x)
+  } else {
+  .svy$variables <- data.frame(SRVYR_VAR = x)
+  }
+  stat <- func(~SRVYR_VAR, .svy, na.rm = na.rm, deff = deff)
 
   vartype <- c("coef", vartype)
   if (deff) vartype <- c(vartype, "deff")
@@ -580,6 +638,53 @@ survey_stat_ungrouped <- function(.svy, func, x, na.rm, vartype, level, deff, df
 
 survey_stat_grouped <- function(.svy, func, x, na.rm, vartype, level,
                                 deff, df, prop_method = NULL) {
+  UseMethod("survey_stat_grouped")
+}
+
+survey_stat_grouped.default <- function(.svy, func, x, na.rm, vartype, level,
+                                        deff, df, prop_method = NULL) {
+  grp_names <- as.character(groups(.svy))
+  if (inherits(x, "tbl_sql")) {
+    # Since we're grouped, dplyr conveniently gives us groups and x.
+    x <- ordered_collect(x)
+
+    grps <- select(x, dplyr::one_of(grp_names))
+    x <- ungroup(x) # need to ungroup to drop the groups
+    x <- select(x, -dplyr::one_of(grp_names))
+    x <- x[[1]] # Get the column as a vector instead of as a tbl_df
+  } else {
+    grps <- select_(.svy$variables, .dots = grp_names)
+  }
+  if (class(x) == "factor") {
+    stop(paste0("Factor not allowed in survey functions, should ",
+                "be used as a grouping variable"))
+  }
+
+  if (class(x) == "logical") x <- as.integer(x)
+
+  vartype <- c("grps", "coef", vartype)
+  if (deff) vartype = c(vartype, "deff")
+
+  .svy$variables <- data.frame(dplyr::bind_cols(grps, data.frame(SRVYR_VAR = x)))
+
+  if (is.null(prop_method)) {
+    stat <- survey::svyby(~SRVYR_VAR, survey::make.formula(grp_names), .svy,
+                          deff = deff, func, na.rm = na.rm)
+  } else {
+    vartype[vartype == "ci"] <- "ci-prop"
+    stat <- survey::svyby(~SRVYR_VAR, survey::make.formula(grp_names),
+                          .svy, func, na.rm = na.rm,
+                          se = TRUE, vartype = c("ci", "se"),
+                          method = prop_method)
+  }
+
+  out <- get_var_est(stat, vartype, grps = grp_names,
+                     level = level, df = df)
+  dplyr::bind_cols(out)
+}
+
+survey_stat_grouped.twophase2 <- function(.svy, func, x, na.rm, vartype, level,
+                                          deff, df, prop_method = NULL) {
   grps <- survey::make.formula(groups(.svy))
 
   if (class(x) == "factor") {
@@ -614,9 +719,20 @@ survey_stat_grouped <- function(.svy, func, x, na.rm, vartype, level,
 }
 
 survey_stat_factor <- function(.svy, func, na.rm, vartype, level, deff, df) {
-  grps <- as.character(groups(.svy))
-  peel <- grps[length(grps)]
-  grps <- setdiff(grps, peel)
+  grps_names <- as.character(groups(.svy))
+  peel_name <- grps_names[length(grps_names)]
+  grps_names <- setdiff(grps_names, peel_name)
+
+  if (inherits(.svy$variables, "tbl_lazy")) {
+    grps_vars <- select_(.svy, .dots = as.character(groups(.svy)))
+    grps_vars <- ordered_collect(grps_vars$variables)
+    .svy$variables <- grps_vars
+  }
+
+  if (is.numeric(.svy$variables[[peel_name]])) {
+    warning("Coercing ", peel_name, " to character in survey_mean().", call. = FALSE)
+    .svy$variables[[peel_name]] <- as.character(.svy$variables[[peel_name]])
+  }
 
   vartype <- c("coef", vartype)
   if (deff) vartype <- c(vartype, "deff")
@@ -626,32 +742,32 @@ survey_stat_factor <- function(.svy, func, na.rm, vartype, level, deff, df) {
     level <- level[1]
   }
 
-  if (length(grps) > 0) {
-    stat <- survey::svyby(survey::make.formula(peel),
-                          survey::make.formula(grps),
+  if (length(grps_names) > 0) {
+    stat <- survey::svyby(survey::make.formula(peel_name),
+                          survey::make.formula(grps_names),
                           .svy, func, na.rm = na.rm, se = TRUE, deff = deff)
 
     var_names <- attr(stat, "svyby")[["variables"]]
     var_names <- unlist(lapply(var_names,
-                               function(x) substring(x, nchar(peel) + 1)))
+                               function(x) substring(x, nchar(peel_name) + 1)))
 
     vartype <- c("grps", vartype)
 
-    out <- get_var_est(stat, vartype, var_names = var_names, grps = grps,
+    out <- get_var_est(stat, vartype, var_names = var_names, grps = grps_names,
                        level = level, df = df)
     # out <- dplyr::bind_cols(out)
     names(out) <- vartype
-    peel_levels <- levels(.svy[["variables"]][[peel]])
-    out <- factor_stat_reshape(out, peel, var_names, peel_levels)
+    peel_levels <- levels(.svy[["variables"]][[peel_name]])
+    out <- factor_stat_reshape(out, peel_name, var_names, peel_levels)
 
     out
   } else {
     # Needed because grouped don't usually have "coef"
     vartype <- c("lvls", vartype)
-    stat <- func(survey::make.formula(peel), .svy, na.rm = na.rm, deff = deff)
+    stat <- func(survey::make.formula(peel_name), .svy, na.rm = na.rm, deff = deff)
 
-    out <- get_var_est(stat, vartype, peel = peel,
-                       peel_levels = levels(.svy[["variables"]][[peel]]),
+    out <- get_var_est(stat, vartype, peel = peel_name,
+                       peel_levels = levels(.svy[["variables"]][[peel_name]]),
                        df = df)
 
     dplyr::bind_cols(out)

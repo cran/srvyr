@@ -5,6 +5,7 @@
 \alias{as_survey.data.frame}
 \alias{as_survey.survey.design2}
 \alias{as_survey.svyrepdesign}
+\alias{as_survey.tbl_sql}
 \alias{as_survey.twophase2}
 \alias{as_survey_}
 \title{Create a tbl_svy from a data.frame}
@@ -12,6 +13,8 @@
 as_survey(.data, ...)
 
 \method{as_survey}{data.frame}(.data, ...)
+
+\method{as_survey}{tbl_sql}(.data, ...)
 
 \method{as_survey}{survey.design2}(.data, ...)
 
@@ -34,6 +37,14 @@ a tbl_svy
 (\code{\link{as_survey_design}}), replicate weights (\code{\link{as_survey_rep}}),
 or a two phase design (\code{\link{as_survey_twophase}}), or an object created by the
 survey package. \code{as_survey_} is its standard evaluation counterpart.
+}
+\details{
+There is also limited support for databases using dplyr's \code{tbl_sql}
+objects for survey designs and replicate weight surveys.
+Not all operations are available for these objects, in particular
+two phase designs do not work.
+See \code{vignette("databases", package = "dplyr")}
+for more information on setting up databases in dplyr.
 }
 \examples{
 # Examples from ?survey::svydesign

@@ -41,21 +41,34 @@ NULL
 
 # Mostly mimics survey:::print.survey.design2
 #' @export
-print.tbl_svy <- function (x, varnames = TRUE, ...) {
+print.tbl_svy <- function (x, varnames = TRUE, all_survey_vars = FALSE, ...) {
   NextMethod()
 
   if (length(survey_vars(x)) > 0) {
-    print(survey_vars(x))
+    print(survey_vars(x), all_survey_vars)
   }
-  if(!is.null(groups(x))) {
+  if(length(groups(x)) != 0) {
     cat("Grouping variables: ")
     cat(paste0(deparse_all(groups(x)), collapse = ", "))
     cat("\n")
   }
 
   if (varnames) {
-    vars <- colnames(x$variables)
-    types <- vapply(x$variables, dplyr::type_sum, character(1))
+    vars <- dplyr::tbl_vars(x$variables)
+
+    # Force calculation for lazy tables (eg tbl_sql) so that
+    # we know what types the variables are.
+    if (inherits(x$variables, "tbl_lazy")) {
+      types <- vapply(dplyr::collect(utils::head(x$variables, 1)),
+                                     dplyr::type_sum, character(1))
+    } else {
+      types <- vapply(x$variables, dplyr::type_sum, character(1))
+    }
+    order_vars <- which(vars %in% attr(x$variables, "order_var"))
+    if (length(order_vars) > 0) {
+      vars <- vars[-order_vars]
+      types <- types[-order_vars]
+    }
 
     var_types <- paste0(vars, " (", types, ")", collapse = ", ")
     cat(wrap("Data variables: ", var_types), "\n", sep = "")
@@ -73,29 +86,67 @@ NULL
 
 #' @export
 tbl_vars.tbl_svy <- function(x) {
-  names(x[["variables"]])
+  dplyr::tbl_vars(x[["variables"]])
 }
 
-
-as_tbl_svy <- function(x, var_names = list()) {
+as_tbl_svy <- function(x, var_names = list(), uid = NULL) {
   if (!inherits(x, "tbl_svy")) {
     class(x) <- c("tbl_svy", class(x))
   }
 
   if (inherits(x, "twophase2")) {
-    x$phase1$full$variables <- dplyr::tbl_df(x$phase1$full$variables)
-    x$phase1$sample$variables <- dplyr::tbl_df(x$phase1$sample$variables)
+    # Convert to tbls if not already (expect them to be one of data.frame, tbl_df or tbl_sqls)
+    # data.frames will be converted, others should inherit "tbl".
+    if (!inherits(x$phase1$full$variables, "tbl")) {
+      x$phase1$full$variables <- dplyr::tbl_df(x$phase1$full$variables)
+    }
+    if (!inherits(x$phase1$sample$variables, "tbl")) {
+      x$phase1$sample$variables <- dplyr::tbl_df(x$phase1$sample$variables)
+    }
 
     # To make twophase behave similarly to the other survey objects, add sample
     # variables from phase1 to the first level of the object.
     x$variables <- x$phase1$sample$variables
-  } else {
-    x$variables <- dplyr::tbl_df(x$variables)
+  } else if (!inherits(x$variables, "tbl")) {
+      x$variables <- dplyr::tbl_df(x$variables)
   }
 
   survey_vars(x) <- var_names
 
+  if (!is.null(uid)) {
+    if (any(duplicated(uid))) {
+      stop("uid columns not unique.")
+    }
+    names(uid) <- get_uid_names(length(uid))
+  }
+  uid(x) <- uid
+
   # To make printing better, change call
-  x$call <- "called via srvyr"
+  x$call <- "Called via srvyr"
+  class(x$call) <- "quoteless_text"
   x
 }
+
+
+#' @export
+as.data.frame.tbl_svy <- function(x, ...) {
+  as.data.frame(x$variables, ...)
+}
+
+#' @export
+as_tibble.tbl_svy <- function(x, ...) {
+  as_tibble(x$variables, ...)
+}
+
+#' Coerce survey variables to a data frame (tibble)
+#' @param x A \code{tbl_svy} object
+#' @name as_tibble
+#' @export
+#' @importFrom tibble as_tibble
+NULL
+
+#' @export
+print.quoteless_text <- function(x, ...) {
+  cat(paste0(x, "\n"))
+}
+

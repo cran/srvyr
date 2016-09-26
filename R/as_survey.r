@@ -5,6 +5,13 @@
 #' or a two phase design (\code{\link{as_survey_twophase}}), or an object created by the
 #' survey package. \code{as_survey_} is its standard evaluation counterpart.
 #'
+#' There is also limited support for databases using dplyr's \code{tbl_sql}
+#' objects for survey designs and replicate weight surveys.
+#' Not all operations are available for these objects, in particular
+#' two phase designs do not work.
+#' See \code{vignette("databases", package = "dplyr")}
+#' for more information on setting up databases in dplyr.
+#'
 #' @param .data a data.frame or an object from the survey package
 #' @param ... other arguments, see other functions for details
 #'
@@ -70,6 +77,9 @@ as_survey.data.frame <- function(.data, ...) {
   }
 }
 
+#' @export
+#' @rdname as_survey
+as_survey.tbl_sql <- as_survey.data.frame
 
 #' @export
 #' @rdname as_survey
