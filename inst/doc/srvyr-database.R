@@ -11,7 +11,8 @@ knitr::opts_chunk$set(eval = FALSE)
 #  })
 #  
 #  # Load data (Currently only Alaska and Hawaii to keep file size small and with
-#  # limited variables, butcode that downloaded the files is available here TKTKTKT,
+#  # limited variables, butcode that downloaded the files is available here
+#  # https://github.com/gergness/srvyr/blob/master/vignettes/save_acs_data.R
 #  # and could easily be adapted to download all states.)
 #  load("acs_m.Rdata") # acs_m data
 #  

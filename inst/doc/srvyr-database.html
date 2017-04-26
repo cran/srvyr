@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2016-09-25" />
+<meta name="date" content="2017-04-26" />
 
 <title>Databases in srvyr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author"><em>Greg Freedman Ellis</em></h4>
-<h4 class="date"><em>2016-09-25</em></h4>
+<h4 class="date"><em>2017-04-26</em></h4>
 
 
 
@@ -79,7 +79,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>This vignette shows the basics of how to use srvyr with databases. It is based on analysis from the wonderful resource asdfree ( <a href="http://asdfree.com/">website</a> and <a href="https://github.com/ajdamico/asdfree">github</a> ). Many thanks to <a href="http://github.com/ajdamico">ajdamico</a> and collaborators. Specifically, I have adpated code from <a href="https://github.com/ajdamico/asdfree/blob/d0b965e9672161da086e30471760d08281b74343/American%20Community%20Survey/2011%20single-year%20-%20analysis%20examples.R">American Community Survey - 2011 single year analysis</a> and the associated data preparation scripts.</p>
 <div id="database-setup" class="section level2">
 <h2>Database Setup</h2>
-<p>In order to focus on srvyr and databases, we start with a prepared dataset. The full code is avaliable on Github TKTKTKT, and the high level description of what it does is:</p>
+<p>In order to focus on srvyr and databases, we start with a prepared dataset. The full code is avaliable <a href="https://github.com/gergness/srvyr/blob/master/vignettes/save_acs_data.R">on Github</a>, and the high level description of what it does is:</p>
 <ul>
 <li><p>Download data from acs website (currently only Alaska and Hawaii to save time, though it would be easy to adapt to download to all 50 states and Puerto Rico).</p></li>
 <li><p>Merges the household and person datasets so that we can look at the variables related to each person including those at the household level</p></li>
@@ -95,7 +95,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 })
 
 <span class="co"># Load data (Currently only Alaska and Hawaii to keep file size small and with </span>
-<span class="co"># limited variables, butcode that downloaded the files is available here TKTKTKT,</span>
+<span class="co"># limited variables, butcode that downloaded the files is available here</span>
+<span class="co"># https://github.com/gergness/srvyr/blob/master/vignettes/save_acs_data.R</span>
 <span class="co"># and could easily be adapted to download all states.)</span>
 <span class="kw">load</span>(<span class="st">&quot;acs_m.Rdata&quot;</span>) <span class="co"># acs_m data</span>
 
@@ -270,7 +271,7 @@ acs_m_db_svy %&gt;%<span class="st"> </span>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

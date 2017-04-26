@@ -2,13 +2,23 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(survey)
   library(srvyr)
-  library(RSQLite)
-  require(MonetDBLite) # MonetDBLite not on all CRAN systems
 })
 
 data(api)
 
-for (db_type in c("RSQLite", "MonetDBLite")) {
+# Dbs not always available
+db_types <- c()
+if (suppressPackageStartupMessages(require(RSQLite))) db_types <- c(db_types, "RSQLite")
+
+# As of 4/22/2017 MonetDBLite does not work with dplyr 0.6
+# Check for updates to: https://github.com/hannesmuehleisen/MonetDBLite
+if (suppressPackageStartupMessages(require(MonetDBLite)) &&
+    class(try(src_monetdblite(), silent = TRUE)) != "try-error") {
+  db_types <- c(db_types, "MonetDBLite")
+}
+
+
+for (db_type in db_types) {
 
   if (identical(Sys.getenv("NOT_CRAN"), "true")) {
     context(paste0("Database objects work as expected - ", db_type))
