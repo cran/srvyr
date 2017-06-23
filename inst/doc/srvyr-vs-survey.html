@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2017-04-26" />
+<meta name="date" content="2017-06-22" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author"><em>Greg Freedman</em></h4>
-<h4 class="date"><em>2017-04-26</em></h4>
+<h4 class="date"><em>2017-06-22</em></h4>
 
 
 
@@ -143,7 +143,7 @@ out &lt;-<span class="st"> </span>strat_design_srvyr %&gt;%
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">api_diff =</span> <span class="kw">survey_mean</span>(api_diff, <span class="dt">vartype =</span> <span class="st">&quot;ci&quot;</span>))
 
 out</code></pre></div>
-<pre><code>## # A tibble: 1 × 3
+<pre><code>## # A tibble: 1 x 3
 ##   api_diff api_diff_low api_diff_upp
 ##      &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
 ## 1 32.89252     28.84756     36.93747</code></pre>
@@ -165,7 +165,7 @@ strat_design_srvyr %&gt;%
 <span class="st">  </span><span class="kw">group_by</span>(stype) %&gt;%
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">api_increase =</span> <span class="kw">survey_total</span>(api_diff &gt;=<span class="st"> </span><span class="dv">0</span>),
             <span class="dt">api_decrease =</span> <span class="kw">survey_total</span>(api_diff &lt;<span class="st"> </span><span class="dv">0</span>))</code></pre></div>
-<pre><code>## # A tibble: 3 × 5
+<pre><code>## # A tibble: 3 x 5
 ##    stype api_increase api_increase_se api_decrease api_decrease_se
 ##   &lt;fctr&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
 ## 1      E      4067.32       119.17185       353.68       119.17185
@@ -190,7 +190,7 @@ srs_design_srvyr %&gt;%
 <span class="st">  </span><span class="kw">group_by</span>(awards) %&gt;%
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">proportion =</span> <span class="kw">survey_mean</span>(),
             <span class="dt">total =</span> <span class="kw">survey_total</span>())</code></pre></div>
-<pre><code>## # A tibble: 2 × 5
+<pre><code>## # A tibble: 2 x 5
 ##   awards proportion proportion_se   total total_se
 ##   &lt;fctr&gt;      &lt;dbl&gt;         &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
 ## 1     No       0.38    0.03384807 2353.72 209.6549
@@ -212,7 +212,7 @@ srs_design_srvyr %&gt;%
 strat_design_srvyr %&gt;%
 <span class="st">  </span><span class="kw">group_by</span>(stype) %&gt;%
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">unweighted</span>(<span class="kw">n</span>()))</code></pre></div>
-<pre><code>## # A tibble: 3 × 2
+<pre><code>## # A tibble: 3 x 2
 ##    stype     n
 ##   &lt;fctr&gt; &lt;int&gt;
 ## 1      E   100
@@ -284,7 +284,7 @@ strat_design_srvyr %&gt;%
 <span class="st">  </span><span class="kw">group_by_</span>(grouping_var) %&gt;%<span class="st"> </span><span class="co"># You can use a character variable </span>
 <span class="st">  </span><span class="kw">summarize_</span>(<span class="dt">api_increase =</span> <span class="st">&quot;survey_total(api_diff &gt;= 0)&quot;</span>, <span class="co"># or a string</span>
              <span class="dt">api_decrease =</span> <span class="st">&quot;survey_total(api_diff &lt; 0)&quot;</span>)</code></pre></div>
-<pre><code>## # A tibble: 3 × 5
+<pre><code>## # A tibble: 3 x 5
 ##    stype api_increase api_increase_se api_decrease api_decrease_se
 ##   &lt;fctr&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
 ## 1      E      4067.32       119.17185       353.68       119.17185

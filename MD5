@@ -1,7 +1,7 @@
-66271a43a0d180d209b5489c133c2d4c *DESCRIPTION
-1dc4c1c0b42b6017df5543ae2ad9d908 *NAMESPACE
-c4b6e147988c386ebc3c4e6ddee3e8d8 *NEWS.md
-a290fb57a642910cd45a74840e291369 *R/as_survey.r
+3a76cccbe8b74cfb797261586dc93181 *DESCRIPTION
+4926770ce830325226906b1c45349e30 *NAMESPACE
+06e6664414ce70473b2cb0dad4c9c2b3 *NEWS.md
+cc6f6b9efc9b10e34ae8df5c7c013c43 *R/as_survey.r
 96c0e4cc019aa0e4de1049fe81bdb643 *R/as_survey_design.r
 7827689efd25ab7158d95a00f87623be *R/as_survey_rep.r
 5b77e80bf12198b41f32468648a60efd *R/as_survey_twophase.r
@@ -21,11 +21,11 @@ beaa72c36e3a9346f6b60a8bd7a4aa57 *R/summarise.r
 54366289db719b516b56d5bfec59a066 *build/vignette.rds
 e9ba53595174e1de9770f30b65b97ba6 *inst/doc/srvyr-database.R
 d2ebdfbef3d1049aa14025c9199fdd40 *inst/doc/srvyr-database.Rmd
-480f37411e975447d087050c964d8b27 *inst/doc/srvyr-database.html
+4c9978bc46b62d9339d7832e97f7463e *inst/doc/srvyr-database.html
 e9219a9aef07c811c7fbf4f629cb4320 *inst/doc/srvyr-vs-survey.R
 811084518a55a95bbc2bf53ea76ad6df *inst/doc/srvyr-vs-survey.Rmd
-68b49a4d25c162b9faf9805ab9a97594 *inst/doc/srvyr-vs-survey.html
-0b9e9f166788d75794f5d197d19d6072 *man/as_survey.Rd
+ba30d665dded1ca66bd60990a0e514b3 *inst/doc/srvyr-vs-survey.html
+d0711b09950e4a8e659d1f7b4a34da05 *man/as_survey.Rd
 8679d7a47e06a052d5fc70df4effb6c0 *man/as_survey_design.Rd
 e058d7f96bac673a2bc8619e7b245388 *man/as_survey_rep.Rd
 bde7a4ee9db5304d696d72aae0fdac96 *man/as_survey_twophase.Rd
@@ -56,7 +56,7 @@ eebfc3d0d7dcc8a84a55e8224998cc45 *tests/testthat/test_cascade.r
 16247faafe03a31a0d59d931ac522e0c *tests/testthat/test_database.R
 3d419c72c1dcf33cbf286607bcde1b3b *tests/testthat/test_level.R
 bb4665186a69349648137438b5c6dcc2 *tests/testthat/test_survey_mean_factor.r
-62f9d157c8ef89eb32a43c0253dcfa78 *tests/testthat/test_survey_package.r
+daaff21b636ff8b199530eceed2786d5 *tests/testthat/test_survey_package.r
 60ab3087b85befea381c7678efa30c08 *tests/testthat/test_survey_proportion.R
 72114f2eec73dae3abb3fd819e84c186 *tests/testthat/test_survey_statistics.r
 90a21202f287429f3e51ef168a5443bf *tests/testthat/test_survey_statistics_basic.r
