@@ -4,10 +4,7 @@
 #' wrapper around \code{\link[survey]{twophase}}. All survey variables must be
 #' included in the data.frame itself. Variables are selected by using bare
 #' column names, or convenience functions described in
-#' \code{\link[dplyr]{select}}. \code{as_survey_twophase_} is the standard
-#' evaluation counterpart to \code{as_survey_twophase}.
-#'
-#' Database objects are not supported for twophase designs.
+#' \code{\link[dplyr]{select}}.
 #'
 #' @export
 #' @param .data A data frame (which contains the variables specified below)
@@ -59,11 +56,11 @@
 #'   summarize(total = survey_total(y1),
 #'             mean = survey_mean(y1))
 #'
-#' ## as_survey_twophase_ uses standard evaluation
-#' id1 <- "id"
-#' id2 <- "id"
+#' # dplyr 0.7 introduced new style of NSE called quosures
+#' # See `vignette("programming", package = "dplyr")` for details
+#' ids <- quo(list(id, id))
 #' d2pbc <- pbc %>%
-#'   as_survey_twophase_(id = list(id1, id2), subset = "randomized")
+#'   as_survey_twophase(id = !!ids, subset = "randomized")
 #'
 as_survey_twophase <- function(.data, ...) {
   UseMethod("as_survey_twophase")
@@ -76,16 +73,26 @@ as_survey_twophase.data.frame <-
            weights = NULL, fpc = NULL, subset,
            method = c("full", "approx", "simple"), ...) {
 
-  id <- helper_list(lazy_parent(id), .data)
-  if (!missing(strata)) strata <- helper_list(lazy_parent(strata), .data)
-  if (!missing(probs)) probs <- helper_list(lazy_parent(probs), .data)
-  if (!missing(weights)) weights <- helper_list(lazy_parent(weights), .data)
-  if (!missing(fpc)) fpc <- helper_list(lazy_parent(fpc), .data)
-  subset <- helper(lazy_parent(subset), .data)
+  id <- srvyr_select_vars_list(rlang::enquo(id), .data)
+  strata <- srvyr_select_vars_list(rlang::enquo(strata), .data)
+  probs <- srvyr_select_vars_list(rlang::enquo(probs), .data)
+  weights <- srvyr_select_vars_list(rlang::enquo(weights), .data)
+  fpc <- srvyr_select_vars_list(rlang::enquo(fpc), .data)
+  subset <- srvyr_select_vars(rlang::enquo(subset), .data)
 
-  as_survey_twophase_(.data, id, strata = strata, probs = probs,
-                 weights = weights, fpc = fpc, subset = subset,
-                 method = method)
+  out <- survey::twophase(
+    data = .data,
+    id = id,
+    strata = strata,
+    probs = probs,
+    weights = weights,
+    fpc = fpc,
+    subset = subset,
+    method = method
+  )
+
+  as_tbl_svy(out, list(ids = id, strata = strata, probs = probs,
+                       weights = weights, fpc = fpc, subset = subset))
 }
 
 
@@ -97,27 +104,22 @@ as_survey_twophase.twophase2 <- function(.data, ...) {
 
 
 #' @export
-#' @rdname as_survey_twophase
+#' @rdname srvyr-se-deprecated
+#' @inheritParams as_survey_twophase
 as_survey_twophase_ <- function(.data, id, strata = NULL, probs = NULL,
                              weights = NULL, fpc = NULL, subset,
                              method = c("full", "approx", "simple")) {
+  as_survey_twophase(
+    .data,
+    id = !!n_compat_lazy(id),
+    strata = !!n_compat_lazy(strata),
+    probs = !!n_compat_lazy(probs),
+    weights = !!n_compat_lazy(weights),
+    fpc = !!n_compat_lazy(fpc),
+    subset = !!n_compat_lazy(subset),
+    method = method
+  )
 
-  out <- survey::twophase(data = .data,
-                          id = list_to_formula(id),
-                          strata = list_to_formula(strata),
-                          probs = list_to_formula(probs),
-                          weights = list_to_formula(weights),
-                          fpc = list_to_formula(fpc),
-                          subset = survey::make.formula(subset),
-                          method = method)
-
-  as_tbl_svy(out, list(ids = id, strata = strata, probs = probs,
-                       weights = weights, fpc = fpc, subset = subset))
-}
-
-#' @rdname as_survey_twophase
-as_survey_twophase.tbl_sql <- function(...) {
-  stop("Twophase surveys don't support databases")
 }
 
 

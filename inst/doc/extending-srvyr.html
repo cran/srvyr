@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Greg Freedman Ellis" />
+
+<meta name="date" content="2018-01-23" />
+
+<title>Extending srvyr</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Extending srvyr</h1>
+<h4 class="author"><em>Greg Freedman Ellis</em></h4>
+<h4 class="date"><em>2018-01-23</em></h4>
+
+
+
+<pre><code>## Loading required package: convey</code></pre>
+<pre><code>## Loading required package: vardpoor</code></pre>
+<pre><code>## Loading required package: data.table</code></pre>
+<pre><code>## Loading required package: laeken</code></pre>
+<pre><code>## Loading required package: boot</code></pre>
+<pre><code>## Loading required package: MASS</code></pre>
+<pre><code>## Loading required package: stringr</code></pre>
+<p>I don’t expect this vignette to be help for most srvyr users, it is instead intended for other package developers. An exciting new feature that is easier now that I have reworked srvyr’s non-standard evaluation to match dplyr 0.7+ is that it is now possible for non-srvyr functions to be called from within <code>summarize</code>. This vignette describes some of the inner-workings of summarize so that others can extend srvyr. This is kind of a fiddly part of srvyr, and I don’t expect that many people will want or need to understand it, so this guide is mostly aimed at package authors who already have an understanding of how survey objects work. If you’d like more explanation, please let me know on <a href="https://github.com/gergness/srvyr">github</a>!</p>
+<div id="translating-from-survey-to-srvyr" class="section level2">
+<h2>Translating from survey to srvyr</h2>
+<p>srvyr implements the “survey tatistics” functions from the survey package. Some examples are the svymean, svytotal, svyciprop, svyquantile and svyratio all return a <code>svystat</code> object which usually prints out the estimate and its standard error and other estimates of the variance can be calculated from it. In srvyr, these estimates are created inside of a summarize call and the variance estimates are specified at the same time.</p>
+<p>The combination of srvyr’s group_by and summarize is analagous to the <code>svyby</code> function that performs one of the survey statistic function and performs it on multiple groups.</p>
+<p>Note that srvyr does not implement many other types of calculations that the survey package can (notably the regressions). While some of these could be shoehorned into srvyr, I feel that they are outside the scope of what people usually expect to have in a data.frame. In general, I think the broom package is better for tidying these kinds of calculations.</p>
+</div>
+<div id="what-summarize-expects" class="section level2">
+<h2>What summarize expects</h2>
+<p>srvyr’s summarize expects that the survey statistics functions will return objects that are formatted in a particular way. Below, I’ll explain some of the functions that will help create these objects for you in most cases, but the return should be:</p>
+<ul>
+<li>A <code>data.frame</code> object</li>
+<li>If ungrouped, 1 row long, otherwise 1 row per group</li>
+<li>If grouped, include both the grouping variables and the estimates</li>
+<li>The names are based on the argument name from the summarize call but this name can’t provided to the functions. Instead, summarize does the renaming and your function should name the variables “__SRVYR_COEF__” (which is renamed to the parameter name) or with a suffix that will be appended after the parameter name.</li>
+</ul>
+</div>
+<div id="helper-functions-exported-by-srvyr" class="section level2">
+<h2>Helper functions exported by srvyr</h2>
+<p>srvyr now exports several functions that can help convert functions designed for the survey package to this format.</p>
+<ul>
+<li><code>current_svy()</code> - This function, modelled after <code>dplyr::current_vars()</code>, is a hidden way to send the survey object to the object (by hidden, I mean that the user doesn’t have to specify the survey in the arguments of their function call). To use it, have an argument in your functions that defaults to current_svy().</li>
+<li><code>set_survey_vars()</code> - Many survey functions have limited support for both supplying a formula indicating the variables to calculate a statistic on as well as a vector. However, oftentimes the vector version is less well supported than the formula version. Since srvyr uses dplyr semantics, it ends up returning the values as vectors. This function will add on the variable to the survey, defaulting to having the name “__SRVYR_TEMP_VAR__”.</li>
+<li><code>get_var_est()</code> - A helper function that calculates variance estimates like standard error (se), confidence interval (ci), variance (var), or coefficient of variance (cv). For functions that support it, there is a separate argument for design effects (to match survey’s conventions).</li>
+</ul>
+<p>Note that these functions may not work in all cases. In srvyr, I’ve actually had to write 3 versions of <code>get_var_est()</code> because of minor differences in the way survey objects are returned. Hopefully they will help in most situations, or at least give you a good place to start.</p>
+</div>
+<div id="miscellaneous-conventions" class="section level2">
+<h2>Miscellaneous conventions</h2>
+<p>Two less important conventions that srvyr functions follow are:</p>
+<ol style="list-style-type: decimal">
+<li>snake_case function names (to better match the tidyverse)</li>
+<li>Multiple choice arguments that default to the first (so for var_type, if no parameters are specified, use only “se” not all of them).</li>
+</ol>
+</div>
+<div id="example-conveysvygini---survey_gini" class="section level2">
+<h2>Example: convey::svygini -&gt; survey_gini</h2>
+<p>That was just a lot of text, but I think it’s probably easiest just to provide an example. The convey package provides several methods for analysis of inequality using survey data. The svygini function calculates the gini coefficient. Here, we’ll write functions that make a srvyr version <code>survey_gini</code>.</p>
+<p>To distinguish between ungrouped and grouped survey objects, we’ll make a generic. Also note the use of <code>.svy = current_svy()</code> to get the survey object from the current summarize context.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># S3 generic function</span>
+survey_gini &lt;-<span class="st"> </span><span class="cf">function</span>(
+  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...
+) {
+  <span class="kw">UseMethod</span>(<span class="st">&quot;survey_gini&quot;</span>, .svy)
+}</code></pre></div>
+<p>And here’s the ungrouped version, which uses <code>set_survey_vars()</code>, <code>convey::svygini()</code> and <code>get_var_est()</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">survey_gini.tbl_svy &lt;-<span class="st"> </span><span class="cf">function</span>(
+  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...
+) {
+  <span class="cf">if</span> (<span class="kw">missing</span>(vartype)) vartype &lt;-<span class="st"> &quot;se&quot;</span>
+  vartype &lt;-<span class="st"> </span><span class="kw">match.arg</span>(vartype, <span class="dt">several.ok =</span> <span class="ot">TRUE</span>)
+  .svy &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">set_survey_vars</span>(.svy, x)
+  
+  out &lt;-<span class="st"> </span>convey<span class="op">::</span><span class="kw">svygini</span>(<span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy)
+  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype)
+  out
+}</code></pre></div>
+<p>Finally, the grouped version which uses the above functions plus <code>survey::svyby()</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">survey_gini.grouped_svy &lt;-<span class="st"> </span><span class="cf">function</span>(
+  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...
+) {
+  <span class="cf">if</span> (<span class="kw">missing</span>(vartype)) vartype &lt;-<span class="st"> &quot;se&quot;</span>
+  vartype &lt;-<span class="st"> </span><span class="kw">match.arg</span>(vartype, <span class="dt">several.ok =</span> <span class="ot">TRUE</span>)
+  .svy &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">set_survey_vars</span>(.svy, x)
+  grps_formula &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">make.formula</span>(<span class="kw">group_vars</span>(.svy))
+  
+  out &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">svyby</span>(
+    <span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, grps_formula, convey<span class="op">::</span>svygini, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy
+  )
+  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype, <span class="dt">grps =</span> <span class="kw">group_vars</span>(.svy))
+  out
+}</code></pre></div>
+<p>And here’s what these functions look like in practice:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Example from ?convey::svygini</span>
+<span class="kw">suppressPackageStartupMessages</span>({
+  <span class="kw">library</span>(srvyr)
+  <span class="kw">library</span>(survey)
+  <span class="kw">library</span>(convey)
+  <span class="kw">library</span>(vardpoor)
+})
+<span class="kw">data</span>(eusilc) ; <span class="kw">names</span>( eusilc ) &lt;-<span class="st"> </span><span class="kw">tolower</span>( <span class="kw">names</span>( eusilc ) )
+
+<span class="co"># Setup for survey package</span>
+des_eusilc &lt;-<span class="st"> </span><span class="kw">svydesign</span>(
+  <span class="dt">ids =</span> <span class="op">~</span>rb030, 
+  <span class="dt">strata =</span> <span class="op">~</span>db040,  
+  <span class="dt">weights =</span> <span class="op">~</span>rb050, 
+  <span class="dt">data =</span> eusilc
+)
+des_eusilc &lt;-<span class="st"> </span><span class="kw">convey_prep</span>(des_eusilc)
+
+<span class="co"># Setup for srvyr package</span>
+srvyr_eusilc &lt;-<span class="st"> </span>eusilc <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">as_survey</span>(
+    <span class="dt">ids =</span> rb030,
+    <span class="dt">strata =</span> db040,
+    <span class="dt">weights =</span> rb050
+  ) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">convey_prep</span>()
+
+## Ungrouped
+<span class="co"># Calculate ungrouped for survey package</span>
+<span class="kw">svygini</span>(<span class="op">~</span>eqincome, <span class="dt">design =</span> des_eusilc)
+<span class="co">#&gt;             gini     SE</span>
+<span class="co">#&gt; eqincome 0.26497 0.0019</span>
+
+<span class="co"># With our new function</span>
+<span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> srvyr_eusilc)
+<span class="co">#&gt;   __SRVYR_COEF__         _se</span>
+<span class="co">#&gt; 1      0.2649652 0.001946982</span>
+
+<span class="co"># And finally, the more typical way through summarize</span>
+srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))
+<span class="co">#&gt; # A tibble: 1 x 2</span>
+<span class="co">#&gt;   eqincome eqincome_se</span>
+<span class="co">#&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span>
+<span class="co">#&gt; 1    0.265     0.00195</span>
+
+## Groups
+<span class="co"># Calculate by groups for survey</span>
+survey<span class="op">::</span><span class="kw">svyby</span>(<span class="op">~</span>eqincome, <span class="op">~</span>rb090, des_eusilc, convey<span class="op">::</span>svygini)
+<span class="co">#&gt;         rb090  eqincome          se</span>
+<span class="co">#&gt; male     male 0.2578983 0.002617279</span>
+<span class="co">#&gt; female female 0.2702080 0.002892713</span>
+
+<span class="co"># With our new function</span>
+<span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> <span class="kw">group_by</span>(srvyr_eusilc, rb090))
+<span class="co">#&gt;    rb090 __SRVYR_COEF__         _se</span>
+<span class="co">#&gt; 1   male      0.2578983 0.002617279</span>
+<span class="co">#&gt; 2 female      0.2702080 0.002892713</span>
+
+<span class="co"># And finally, the more typical way through summarize</span>
+srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(rb090) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))
+<span class="co">#&gt; # A tibble: 2 x 3</span>
+<span class="co">#&gt;   rb090  eqincome eqincome_se</span>
+<span class="co">#&gt;   &lt;fct&gt;     &lt;dbl&gt;       &lt;dbl&gt;</span>
+<span class="co">#&gt; 1 male      0.258     0.00262</span>
+<span class="co">#&gt; 2 female    0.270     0.00289</span></code></pre></div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

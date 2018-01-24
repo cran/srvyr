@@ -1,33 +1,20 @@
 #' @export
-summarise_.tbl_svy <- function(.data, ..., .dots) {
-  .dots <- lazyeval::all_dots(.dots, ..., all_named = TRUE)
+summarise.tbl_svy <- function(.data, ...) {
+  .dots <- rlang::quos(...)
 
-  survey_funs <- list(
-    survey_mean = function(...) survey_mean(..., .svy = .data),
-    survey_total = function(...) survey_total(..., .svy = .data),
-    survey_ratio = function(...) survey_ratio(..., .svy = .data),
-    survey_quantile = function(...) survey_quantile(..., .svy = .data),
-    survey_median = function(...) survey_median(..., .svy = .data),
-    unweighted = function(...) unweighted(..., .svy = .data)
-  )
+  if (is_lazy_svy(.data)) .data <- localize_lazy_svy(.data, .dots)
 
-  if (inherits(.data$variables, "tbl_sql")) {
-    sql_vars <- lapply(tbl_vars(.data$variables), function(x) {
-      out <- dplyr::select_(.data$variables, x, attr(.data$variables, "order_var"))
-      out
-      })
-    names(sql_vars) <- tbl_vars(.data$variables)
+  # Set current_svy so available to svy stat functions
+  old <- set_current_svy(.data)
+  on.exit(set_current_svy(old), add = TRUE)
 
-    out <- lazyeval::lazy_eval(.dots, c(survey_funs, sql_vars))
-  } else {
-    out <- lazyeval::lazy_eval(.dots, c(survey_funs, .data$variables))
-  }
   # use the argument names to name the output
-  out <- lapply(seq_along(out), function(x) {
-    var_names <- names(out[[x]])
-    vname_is_V1 <- var_names == "V1" # Bandaid for dplyr 0.6 behavior
-    if (any(vname_is_V1)) var_names[vname_is_V1] <- ""
-    stats::setNames(out[[x]], paste0(names(out[x]), var_names))
+  out <- lapply(seq_along(.dots), function(x) {
+    out <- rlang::eval_tidy(.dots[[x]], .data$variables)
+    var_names <- names(out)
+    vname_is_coef <- var_names == "__SRVYR_COEF__"
+    if (any(vname_is_coef)) var_names[vname_is_coef] <- ""
+    stats::setNames(out, paste0(names(.dots)[x], var_names))
   })
 
   out <- dplyr::bind_cols(out)
@@ -35,40 +22,32 @@ summarise_.tbl_svy <- function(.data, ..., .dots) {
 }
 
 #' @export
-summarise_.grouped_svy <- function(.data, ..., .dots) {
-  .dots <- lazyeval::all_dots(.dots, ..., all_named = TRUE)
+summarise_.tbl_svy <- function(.data, ..., .dots) {
+  dots <- compat_lazy_dots(.dots, caller_env(), ...)
+  summarise(.data, !!!dots)
+}
 
-  survey_funs <- list(
-    survey_mean = function(...) survey_mean(..., .svy = .data),
-    survey_total = function(...) survey_total(..., .svy = .data),
-    survey_ratio = function(...) survey_ratio(..., .svy = .data),
-    survey_quantile = function(...) survey_quantile(..., .svy = .data),
-    survey_median = function(...) survey_median(..., .svy = .data),
-    unweighted = function(...) unweighted(..., .svy = .data)
-  )
+#' @export
+summarise.grouped_svy <- function(.data, ...) {
+  .dots <- rlang::quos(...)
 
-  groups <- as.character(groups(.data))
+  if (is_lazy_svy(.data)) .data <- localize_lazy_svy(.data, .dots)
 
-  if (inherits(.data$variables, "tbl_sql")) {
-    sql_vars <- lapply(tbl_vars(.data$variables), function(x) {
-      out <- dplyr::select_(.data$variables, x, attr(.data$variables, "order_var"))
-      out
-    })
-    names(sql_vars) <- tbl_vars(.data$variables)
+  # Set current_svy so available to svy stat functions
+  old <- set_current_svy(.data)
+  on.exit(set_current_svy(old), add = TRUE)
 
-    out <- lazyeval::lazy_eval(.dots, c(survey_funs, sql_vars))
-  } else {
-    out <- lazyeval::lazy_eval(.dots, c(survey_funs, .data$variables))
-  }
+  groups <- group_vars(.data)
+
   # use the argument names to name the output
-  out <- lapply(seq_along(out), function(x) {
+  out <- lapply(seq_along(.dots), function(x) {
+    out <- rlang::eval_tidy(.dots[[x]], .data$variables)
     unchanged_names <- groups
-    changed_names <- setdiff(names(out[[x]]), groups)
-    changed_names_is_v1 <- changed_names == "V1"
-    if (any(changed_names_is_v1)) changed_names[changed_names_is_v1] <- ""
-    results <- stats::setNames(out[[x]], c(unchanged_names, paste0(names(out[x]),
-                                                            changed_names)))
-    results <- dplyr::arrange_(results, unchanged_names)
+    changed_names <- setdiff(names(out), groups)
+    changed_names_is_coef <- changed_names == "__SRVYR_COEF__"
+    changed_names[which(changed_names_is_coef)] <- ""
+    results <- stats::setNames(out, c(unchanged_names, paste0(names(.dots)[x], changed_names)))
+    results <- dplyr::arrange(results, !!!rlang::syms(unchanged_names))
 
     # Only keep stratifying vars in first calculation so they're not repeated
     if (x > 1) results <- results[, !(names(results) %in% groups)]
@@ -79,19 +58,21 @@ summarise_.grouped_svy <- function(.data, ..., .dots) {
   dplyr::tbl_df(out)
 }
 
+#' @export
+summarise_.grouped_svy <- function(.data, ..., .dots) {
+  dots <- compat_lazy_dots(.dots, caller_env(), ...)
+  summarise(.data, !!!dots)
+}
+
 #' Summarise multiple values to a single value.
 #'
 #' Summarise multiple values to a single value.
 #'
 #' @usage summarise(.data, ...)
 #' summarize(.data, ...)
-#' summarise_(.data, ..., .dots)
-#' summarize_(.data, ..., .dots)
 #'
 #' @param .data, tbl A \code{tbl_svy} object
 #' @param ... Name-value pairs of summary functions
-#' @param .dots Used to work around non-standard evaluation. See
-#' \code{vignette("nse", package = "dplyr")} for details.
 #'
 #' @details
 #' Summarise for \code{tbl_svy} objects accepts several specialized functions.
@@ -107,7 +88,7 @@ summarise_.grouped_svy <- function(.data, ..., .dots) {
 #' The other arguments correspond to the analagous function arguments from the
 #' survey package.
 #'
-#' The available functions are:
+#' The available functions from srvyr are:
 #'
 #'\describe{
 #' \item{\code{\link{survey_mean}}}{
@@ -157,7 +138,8 @@ NULL
 #' @name summarise_
 #' @export
 #' @importFrom dplyr summarise_
-#' @rdname summarise
+#' @rdname srvyr-se-deprecated
+#' @inheritParams summarise
 NULL
 
 #' @name summarize
@@ -169,5 +151,7 @@ NULL
 #' @name summarize_
 #' @export
 #' @importFrom dplyr summarize_
-#' @rdname summarise
+#' @rdname srvyr-se-deprecated
+#' @inheritParams summarize
 NULL
+

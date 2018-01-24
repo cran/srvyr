@@ -4,8 +4,6 @@
 \alias{as_survey_twophase}
 \alias{as_survey_twophase.data.frame}
 \alias{as_survey_twophase.twophase2}
-\alias{as_survey_twophase_}
-\alias{as_survey_twophase.tbl_sql}
 \title{Create a tbl_svy survey object using two phase design}
 \usage{
 as_survey_twophase(.data, ...)
@@ -15,12 +13,6 @@ as_survey_twophase(.data, ...)
   "approx", "simple"), ...)
 
 \method{as_survey_twophase}{twophase2}(.data, ...)
-
-as_survey_twophase_(.data, id, strata = NULL, probs = NULL,
-  weights = NULL, fpc = NULL, subset, method = c("full", "approx",
-  "simple"))
-
-\method{as_survey_twophase}{tbl_sql}(...)
 }
 \arguments{
 \item{.data}{A data frame (which contains the variables specified below)}
@@ -53,11 +45,7 @@ Create a survey object by specifying the survey's two phase design. It is a
 wrapper around \code{\link[survey]{twophase}}. All survey variables must be
 included in the data.frame itself. Variables are selected by using bare
 column names, or convenience functions described in
-\code{\link[dplyr]{select}}. \code{as_survey_twophase_} is the standard
-evaluation counterpart to \code{as_survey_twophase}.
-}
-\details{
-Database objects are not supported for twophase designs.
+\code{\link[dplyr]{select}}.
 }
 \examples{
 # Examples from ?survey::twophase
@@ -94,10 +82,10 @@ d2mu284 \%>\%
   summarize(total = survey_total(y1),
             mean = survey_mean(y1))
 
-## as_survey_twophase_ uses standard evaluation
-id1 <- "id"
-id2 <- "id"
+# dplyr 0.7 introduced new style of NSE called quosures
+# See `vignette("programming", package = "dplyr")` for details
+ids <- quo(list(id, id))
 d2pbc <- pbc \%>\%
-  as_survey_twophase_(id = list(id1, id2), subset = "randomized")
+  as_survey_twophase(id = !!ids, subset = "randomized")
 
 }

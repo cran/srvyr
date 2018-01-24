@@ -14,7 +14,7 @@ out <- apistrat %>%
 
 ggplot(data = out, aes(x = stype, y = api_diff, group = hs_grad_pct, fill = hs_grad_pct)) +
   geom_bar(stat = "identity", position = "dodge") +
-  geom_text(aes(y = 0, ymax = api_diff, label = n), position = position_dodge(width = 0.9), vjust = -1)
+  geom_text(aes(y = 0, label = n), position = position_dodge(width = 0.9), vjust = -1)
 
 ## ---- message = FALSE----------------------------------------------------
 library(srvyr)
@@ -114,14 +114,23 @@ glm <- svyglm(api00 ~ ell + meals + mobility, design = strat_design)
 summary(glm)
 
 ## ---- message = FALSE----------------------------------------------------
-srs_design_srvyr <- apisrs %>% as_survey_design_(ids = "1", fpc = "fpc")
+fpc_var <- sym("fpc")
+srs_design_srvyr <- apisrs %>% as_survey_design(fpc = !!fpc_var)
 
-grouping_var <- "stype"
+grouping_var <- sym("stype")
+api_diff <- quo(api00 - api99)
 
-strat_design_srvyr %>%
-  group_by_(grouping_var) %>% # You can use a character variable 
-  summarize_(api_increase = "survey_total(api_diff >= 0)", # or a string
-             api_decrease = "survey_total(api_diff < 0)")
+srs_design_srvyr %>%
+  group_by(!!grouping_var) %>% 
+  summarize(
+    api_increase = survey_total((!!api_diff) >= 0),
+    api_decrease = survey_total((!!api_diff) < 0)
+  )
 
 
+
+## ------------------------------------------------------------------------
+# Calculate survey mean for all variables that have names starting with "api"
+strat_design %>%
+  summarize_at(vars(starts_with("api")), survey_mean)
 

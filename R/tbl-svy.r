@@ -55,19 +55,11 @@ print.tbl_svy <- function (x, varnames = TRUE, all_survey_vars = FALSE, ...) {
 
   if (varnames) {
     vars <- dplyr::tbl_vars(x$variables)
-
-    # Force calculation for lazy tables (eg tbl_sql) so that
-    # we know what types the variables are.
     if (inherits(x$variables, "tbl_lazy")) {
-      types <- vapply(dplyr::collect(utils::head(x$variables, 1)),
-                                     dplyr::type_sum, character(1))
+      var_single_row <- dplyr::collect(utils::head(x$variables, 1))
+      types <- vapply(var_single_row, dplyr::type_sum, character(1))
     } else {
       types <- vapply(x$variables, dplyr::type_sum, character(1))
-    }
-    order_vars <- which(vars %in% attr(x$variables, "order_var"))
-    if (length(order_vars) > 0) {
-      vars <- vars[-order_vars]
-      types <- types[-order_vars]
     }
 
     var_types <- paste0(vars, " (", types, ")", collapse = ", ")
@@ -89,13 +81,21 @@ tbl_vars.tbl_svy <- function(x) {
   dplyr::tbl_vars(x[["variables"]])
 }
 
-as_tbl_svy <- function(x, var_names = list(), uid = NULL) {
+as_tbl_svy <- function(x, var_names = list()) {
   if (!inherits(x, "tbl_svy")) {
     class(x) <- c("tbl_svy", class(x))
   }
 
+  x_classes <- class(x)
+  db_svy_classes <- c("DBIsvydesign", "DBIrepdesign")
+  if (any(x_classes %in% db_svy_classes)) {
+    x$variables <- dplyr::tbl(x$db$connection, x$db$tablename)
+    x$db <- NULL
+    class(x) <- dplyr::setdiff(x_classes, db_svy_classes)
+  }
+
   if (inherits(x, "twophase2")) {
-    # Convert to tbls if not already (expect them to be one of data.frame, tbl_df or tbl_sqls)
+    # Convert to tbls if not already (expect them to be one of data.frame or tbl_df)
     # data.frames will be converted, others should inherit "tbl".
     if (!inherits(x$phase1$full$variables, "tbl")) {
       x$phase1$full$variables <- dplyr::tbl_df(x$phase1$full$variables)
@@ -111,19 +111,16 @@ as_tbl_svy <- function(x, var_names = list(), uid = NULL) {
       x$variables <- dplyr::tbl_df(x$variables)
   }
 
-  survey_vars(x) <- var_names
-
-  if (!is.null(uid)) {
-    if (any(duplicated(uid))) {
-      stop("uid columns not unique.")
-    }
-    names(uid) <- get_uid_names(length(uid))
-  }
-  uid(x) <- uid
+  survey_vars(x) <- strip_varlist_formula(var_names)
 
   # To make printing better, change call
   x$call <- "Called via srvyr"
   class(x$call) <- "quoteless_text"
+
+  # Add db class
+  if (inherits(x$variables, "tbl_lazy")) {
+    class(x) <- c("tbl_lazy_svy", class(x))
+  }
   x
 }
 
@@ -150,3 +147,9 @@ print.quoteless_text <- function(x, ...) {
   cat(paste0(x, "\n"))
 }
 
+strip_varlist_formula <- function(vars) {
+  lapply(vars, function(x) {
+    if (length(x) == 0) return(x)
+    as.character(x)[-1] # First pos is either ~ or +
+  })
+}

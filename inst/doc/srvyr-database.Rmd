@@ -13,15 +13,10 @@ vignette: >
 knitr::opts_chunk$set(eval = FALSE)
 ```
 
-Srvyr now has experimental support of database backed surveys. It uses dplyr databases 
-as the backend, not the survey package's database support, which allows for nearly identical 
-consistent syntax when working with database or local data.frame backed surveys. 
-The actual implementation is similar to the survey package's in that it stores the 
-survey variables (such as weighting, stratum, etc.) in local memory and so will provide the most
-benefit when dealing with surveys with a large number of variables, rather than surveys
-with a large number of observations. It is slower than the survey package's support, because it is
-more careful about the sorting order when pulling data from the database, in my testing 
-it is about 2X slower than survey. 
+Srvyr 0.3 has a completely rewritten database backend. Using databases that are already stored
+dplyr's `tbl_lazy` objects is now just as easy as working with data stored in regular R 
+data.frames as you don't need to have a unique identifier. Additionally, it now works more
+similarly to the survey package's database code and so shouldn't be any slower.
 
 During development, I have tested using SQLite and MonetDBLite database, but in theory 
 other database backends should work as well.
@@ -155,7 +150,7 @@ acs_m_db %>%
 ```
 
 For more information on the specifics of databases
-with dplyr, see `vignette("database", package = dplyr)`, the `DBI` package or the 
+with dplyr, see `vignette("database", package = "dplyr")`, the `DBI` package or the 
 specific database packages, like `MonetDBLite` or `RSQLite`.
 
 ## Srvyr Setup ##
@@ -171,8 +166,7 @@ acs_m_db_svy <- acs_m_db %>%
     rscales = rep(1 , 80),
     mse = TRUE,
     type = "JK1", 
-    variables = -c(matches("^pwgtp")),
-    uid = c(serialno, sporder)
+    variables = -c(matches("^pwgtp"))
   )
 
 acs_m_db_svy
@@ -264,15 +258,21 @@ acs_m_db_svy %>%
 ```
 
 ## Advanced Topics ##
+### Running survey commands with collect ###
+If you'd like to run a command from the survey package, you'll need to collect the
+data locally first. You can select only the variables you'll need for the analysis 
+so that you don't have to store the whole dataset in memory.
+
+```{r}
+acs_m_db_svy %>%
+  select(agep, hicov, sex) %>%
+  collect() %>%
+  {survey::svyglm(hicov ~ sex + agep, .)} %>%
+  summary()
+```
+
 ### Write Access ###
 Note that srvyr does not require write access to perform calculations, 
 the database created in this vignette was set to read-only at the beginning. 
 This can be important when you want to make sure that your original data is
 not altered accidentally, or if you don't have write access to a database.
-
-### Speed ###
-Srvyr using a database is significantly slower than using the survey package's
-database support, which is in turn slower than using local data.frames. The real
-advantages of databases are for working with sureys that are very wide (many variables). 
-Srvyr's advantage over the survey package comes down to the syntax, if you prefer the
-consistent style of srvyr you'll need to be willing to stomach the performance loss.

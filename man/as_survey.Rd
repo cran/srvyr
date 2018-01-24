@@ -3,26 +3,23 @@
 \name{as_survey}
 \alias{as_survey}
 \alias{as_survey.data.frame}
-\alias{as_survey.tbl_sql}
+\alias{as_survey.tbl_lazy}
 \alias{as_survey.survey.design2}
 \alias{as_survey.svyrep.design}
 \alias{as_survey.twophase2}
-\alias{as_survey_}
 \title{Create a tbl_svy from a data.frame}
 \usage{
 as_survey(.data, ...)
 
 \method{as_survey}{data.frame}(.data, ...)
 
-\method{as_survey}{tbl_sql}(.data, ...)
+\method{as_survey}{tbl_lazy}(.data, ...)
 
 \method{as_survey}{survey.design2}(.data, ...)
 
 \method{as_survey}{svyrep.design}(.data, ...)
 
 \method{as_survey}{twophase2}(.data, ...)
-
-as_survey_(.data, ...)
 }
 \arguments{
 \item{.data}{a data.frame or an object from the survey package}
@@ -36,13 +33,9 @@ a tbl_svy
 \code{as_survey} can be used to create a \code{tbl_svy} using design information
 (\code{\link{as_survey_design}}), replicate weights (\code{\link{as_survey_rep}}),
 or a two phase design (\code{\link{as_survey_twophase}}), or an object created by the
-survey package. \code{as_survey_} is its standard evaluation counterpart.
+survey package.
 }
 \details{
-There is also limited support for databases using dplyr's \code{tbl_sql}
-objects for survey designs and replicate weight surveys.
-Not all operations are available for these objects, in particular
-two phase designs do not work.
 See \code{vignette("databases", package = "dplyr")}
 for more information on setting up databases in dplyr.
 }
@@ -78,8 +71,10 @@ pbc <- pbc \%>\%
 d2pbc <- pbc \%>\%
   as_survey(id = list(id, id), subset = randomized)
 
-# as_survey_ uses standard evaluation
+# dplyr 0.7 introduced new style of NSE called quosures
+# See `vignette("programming", package = "dplyr")` for details
+st <- quo(stype)
+wt <- quo(pw)
 dstrata <- apistrat \%>\%
-  as_survey_(strata = "stype", weights = "pw")
-
+  as_survey(strata = !!st, weights = !!wt)
 }

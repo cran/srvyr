@@ -5,8 +5,7 @@
 #' If provided a data.frame, it is a wrapper around \code{\link[survey]{svrepdesign}}.
 #' All survey variables must be included in the data.frame itself. Variables are
 #' selected by using bare column names, or convenience functions described in
-#' \code{\link[dplyr]{select}}. \code{as_survey_rep_} is the standard evaluation
-#' counterpart to \code{as_survey_rep}.
+#' \code{\link[dplyr]{select}}.
 #'
 #' If provided a \code{svyrep.design} object from the survey package,
 #' it will turn it into a srvyr object, so that srvyr functions will work with it
@@ -14,11 +13,6 @@
 #' If provided a survey design (\code{survey.design2} or \code{tbl_svy}), it is a wrapper
 #' around \code{\link[survey]{as.svrepdesign}}, and will convert from a survey design to
 #' replicate weights.
-#'
-#' There is also limited and experimental support for databases using dplyr's \code{tbl_sql}
-#' objects. Not all operations are available for these objects. See
-#' \code{vignette("databases", package = "dplyr")} for more information on setting up
-#' databases in dplyr.
 #'
 #' @export
 #' @param .data A data frame (which contains the variables specified below)
@@ -36,8 +30,6 @@
 #' @param fpc,fpctype Finite population correction information
 #' @param mse if \code{TRUE}, compute varainces based on sum of squares
 #' around the point estimate, rather than the mean of the replicates
-#' @param uid Required for databases only, variables that uniquely identify the
-#' observations of your survey.
 #' @param ... ignored
 #' @param compress if \code{TRUE}, store replicate weights in compressed form
 #' (if converting from design)
@@ -59,10 +51,11 @@
 #'   as_survey_rep(type = "BRR", repweights = starts_with("rep"),
 #'                 combined_weights = FALSE)
 #'
-#' # as_survey_rep_ uses standard evaluation
-#' repwts <- names(scd)[grep("^rep", names(scd))]
+#' # dplyr 0.7 introduced new style of NSE called quosures
+#' # See `vignette("programming", package = "dplyr")` for details
+#' repwts <- quo(starts_with("rep"))
 #' scdrep <- scd %>%
-#'   as_survey_rep_(type = "BRR", repweights = repwts,
+#'   as_survey_rep(type = "BRR", repweights = !!repwts,
 #'                 combined_weights = FALSE)
 #'
 as_survey_rep <- function(.data, ...) {
@@ -77,29 +70,89 @@ as_survey_rep.data.frame <-
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
-           mse = getOption("survey.replicates.mse"), uid = NULL, ...) {
-    if (!missing(variables)) variables <- helper(lazy_parent(variables), .data)
-    if (!missing(repweights)) repweights <- helper(lazy_parent(repweights), .data)
-    if (!missing(weights)) weights <- helper(lazy_parent(weights), .data)
-    if (!missing(fpc)) fpc <- helper(lazy_parent(fpc), .data)
-    if (!missing(uid)) uid <- helper(lazy_parent(uid), .data)
+           mse = getOption("survey.replicates.mse"), ...) {
+    variables <- srvyr_select_vars(rlang::enquo(variables), .data)
+    repweights <- srvyr_select_vars(rlang::enquo(repweights), .data)
+    weights <- srvyr_select_vars(rlang::enquo(weights), .data)
+    fpc <- srvyr_select_vars(rlang::enquo(fpc), .data)
 
-    as_survey_rep_(.data, variables, repweights,
-                   weights, type, combined_weights,
-                   rho, bootstrap_average, scale, rscales,
-                   fpc, fpctype, mse, uid)
+    out <- survey::svrepdesign(
+      variables = variables,
+      repweights = repweights,
+      weights = weights,
+      data = .data,
+      type = match.arg(type),
+      combined.weights = combined_weights,
+      rho = rho,
+      bootstrap.average = bootstrap_average,
+      scale = scale,
+      rscales = rscales,
+      fpc = fpc,
+      fpctype = fpctype,
+      mse = mse
+    )
+
+    as_tbl_svy(
+      out,
+      list(repweights = repweights,  weights = weights, fpc = fpc)
+    )
   }
+
+
+#' @export
+#' @rdname as_survey_rep
+as_survey_rep.tbl_lazy <-
+  function(.data, variables = NULL, repweights = NULL, weights = NULL,
+           type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
+                    "other"), combined_weights = TRUE,
+           rho = NULL, bootstrap_average = NULL, scale = NULL,
+           rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
+           mse = getOption("survey.replicates.mse"), ...) {
+
+    variables <- rlang::enquo(variables)
+    repweights <- rlang::enquo(repweights)
+    weights <- rlang::enquo(weights)
+    fpc <- rlang::enquo(fpc)
+
+    survey_vars_local <- get_lazy_vars(
+      data = .data, !!variables, !!repweights, !!weights, !!fpc
+    )
+
+    variables <- srvyr_select_vars(variables, .data)
+    repweights <- srvyr_select_vars(repweights, .data)
+    weights <- srvyr_select_vars(weights, .data)
+    fpc <- srvyr_select_vars(fpc, .data)
+
+    out <- survey::svrepdesign(
+      variables = variables,
+      repweights = repweights,
+      weights = weights,
+      data = survey_vars_local,
+      type = match.arg(type),
+      combined.weights = combined_weights,
+      rho = rho,
+      bootstrap.average = bootstrap_average,
+      scale = scale,
+      rscales = rscales,
+      fpc = fpc,
+      fpctype = fpctype,
+      mse = mse
+    )
+
+    out$variables <- .data
+
+    as_tbl_svy(
+      out,
+      list(repweights = repweights,  weights = weights, fpc = fpc)
+    )
+  }
+
 
 #' @export
 #' @rdname as_survey_rep
 as_survey_rep.svyrep.design <- function(.data, ...) {
   as_tbl_svy(.data)
 }
-
-#' @export
-#' @rdname as_survey_rep
-as_survey_rep.tbl_sql <- as_survey_rep.data.frame
-
 
 #' @export
 #' @rdname as_survey_rep
@@ -137,42 +190,29 @@ as_survey_rep.tbl_svy <-
 
 
 #' @export
-#' @rdname as_survey_rep
+#' @rdname srvyr-se-deprecated
+#' @inheritParams as_survey_rep
 as_survey_rep_ <-
   function(.data, variables = NULL, repweights = NULL, weights = NULL,
            type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
-           mse = getOption("survey.replicates.mse"), uid = NULL) {
+           mse = getOption("survey.replicates.mse")) {
 
-    # Databases require uid
-    if (inherits(.data, "tbl_lazy")) {
-      # Databases require uid
-      if (missing(uid) || is.null(uid)) {
-        stop("Database backed surveys require a uid.")
-      } else {
-        uid_names <- get_uid_names(length(uid))
-        .data <- uid_rename(.data, uid, uid_names)
-        attr(.data, "order_var") <- uid_names
-      }
-    }
-
-    out <- survey::svrepdesign(
-      data = .data,
-      variables = survey_selector(.data, variables),
-      repweights = survey_selector(.data, repweights),
-      weights = nullable(as.matrix, survey_selector(.data, weights)[[1]]),
-      type = match.arg(type),
-      combined.weights = combined_weights,
+    as_survey_rep(
+      .data,
+      variables = !!n_compat_lazy(variables),
+      repweights = !!n_compat_lazy(repweights),
+      weights = !!n_compat_lazy(weights),
+      type = type,
+      combined_weights = combined_weights,
       rho = rho,
-      bootstrap.average = bootstrap_average,
+      bootstrap_average = bootstrap_average,
       scale = scale,
       rscales = rscales,
-      fpc = survey_selector(.data, fpc),
+      fpc = !!n_compat_lazy(fpc),
       fpctype = fpctype,
-      mse = mse)
-
-    as_tbl_svy(out, list(repweights = repweights,  weights = weights,
-                         fpc = fpc), uid = survey_selector(.data, uid))
+      mse = mse
+    )
   }

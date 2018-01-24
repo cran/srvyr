@@ -1,40 +1,66 @@
 #' @export
-mutate_.tbl_svy <- function(.data, ..., .dots) {
-  dots <- lazyeval::all_dots(.dots, ..., all_named = TRUE)
+mutate.tbl_svy <- function(.data, ...) {
+  dots <- rlang::quos(...)
 
   if (any(names2(dots) %in% as.character(survey_vars(.data)))) {
     stop("Cannot modify survey variable")
   }
 
-  .data$variables <- mutate_(.data$variables, .dots = dots)
+  .data$variables <- mutate(.data$variables, !!!dots)
+  .data
+}
+
+#' @export
+mutate_.tbl_svy <- function(.data, ..., .dots) {
+  dots <- compat_lazy_dots(.dots, caller_env(), ...)
+  mutate(.data, !!!dots)
+}
+
+#' @export
+select.tbl_svy <- function(.data, ...) {
+  dots <- rlang::quos(...)
+  .data$variables <- select(.data$variables, !!!dots)
+
   .data
 }
 
 #' @export
 select_.tbl_svy <- function(.data, ..., .dots) {
-  dots <- lazyeval::all_dots(.dots, ...)
-  vars <- dplyr::select_vars_(dplyr::tbl_vars(.data$variables), dots,
-                       include = c(attr(.data, "group_vars"),
-                                   attr(.data$variables, "order_var")))
+  dots <- compat_lazy_dots(.dots, caller_env(), ...)
+  select(.data, !!!dots)
+}
 
-  .data$variables <- select_(.data$variables, .dots = vars)
+#' @export
+rename.tbl_svy <- function(.data, ...) {
+  dots <- rlang::quos(...)
+  .data$variables <- rename(.data$variables, !!!dots)
 
   .data
 }
 
 #' @export
 rename_.tbl_svy <- function(.data, ..., .dots) {
-  dots <- lazyeval::all_dots(.dots, ...)
-  vars <- dplyr::rename_vars_(dplyr::tbl_vars(.data$variables), dots)
-  .data$variables <- rename_(.data$variables, .dots = vars)
+  dots <- compat_lazy_dots(.dots, caller_env(), ...)
+  rename(.data, !!!dots)}
 
-  .data
+#' @export
+filter.tbl_svy <- function(.data, ...) {
+  dots <- rlang::quos(...)
+  if (is_lazy_svy(.data)) {
+    lazy_subset_svy_vars(.data, !!!dots)
+  } else {
+    subset_svy_vars(.data, !!!dots)
+  }
 }
 
 #' @export
 filter_.tbl_svy <- function(.data, ..., .dots) {
-  dots <- lazyeval::all_dots(.dots, ...)
-  subset_svy_vars(.data, dots)
+  dots <- compat_lazy_dots(.dots, rlang::caller_env(), ...)
+  if (is_lazy_svy(.data)) {
+    lazy_subset_svy_vars(.data, !!!dots)
+  } else {
+    subset_svy_vars(.data, !!!dots)
+  }
 }
 
 
@@ -70,7 +96,7 @@ NULL
 #' @name mutate_
 #' @export
 #' @importFrom dplyr mutate_
-#' @rdname dplyr_single
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name transmute
@@ -82,7 +108,7 @@ NULL
 #' @name transmute_
 #' @export
 #' @importFrom dplyr transmute_
-#' @rdname dplyr_single
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name select
@@ -94,7 +120,7 @@ NULL
 #' @name select_
 #' @export
 #' @importFrom dplyr select_
-#' @rdname dplyr_single
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name rename
@@ -106,7 +132,7 @@ NULL
 #' @name rename_
 #' @export
 #' @importFrom dplyr rename_
-#' @rdname dplyr_single
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name filter
@@ -118,14 +144,14 @@ NULL
 #' @name filter_
 #' @export
 #' @importFrom dplyr filter_
-#' @rdname dplyr_single
+#' @rdname srvyr-se-deprecated
 NULL
 
 
-#' Summarise and mutate multiple columns.
+#' Manipulate multiple columns.
 #'
 #' See \code{\link[dplyr]{summarize_all}} for more details. *_each functions will be depracated
-#' in favor of *_all/*_if/*_at functions, but the latter do not yet work on database backed tables.
+#' in favor of *_all/*_if/*_at functions.
 #'
 #' @name summarise_all
 #' @export
@@ -180,6 +206,78 @@ NULL
 #' @rdname summarise_all
 NULL
 
+#' @name filter_all
+#' @export
+#' @importFrom dplyr filter_all
+#' @rdname summarise_all
+NULL
+
+#' @name filter_at
+#' @export
+#' @importFrom dplyr filter_at
+#' @rdname summarise_all
+NULL
+
+#' @name filter_if
+#' @export
+#' @importFrom dplyr filter_if
+#' @rdname summarise_all
+NULL
+
+#' @name select_all
+#' @export
+#' @importFrom dplyr select_all
+#' @rdname summarise_all
+NULL
+
+#' @name select_at
+#' @export
+#' @importFrom dplyr select_at
+#' @rdname summarise_all
+NULL
+
+#' @name select_if
+#' @export
+#' @importFrom dplyr select_if
+#' @rdname summarise_all
+NULL
+
+#' @name rename_all
+#' @export
+#' @importFrom dplyr rename_all
+#' @rdname summarise_all
+NULL
+
+#' @name rename_at
+#' @export
+#' @importFrom dplyr rename_at
+#' @rdname summarise_all
+NULL
+
+#' @name rename_if
+#' @export
+#' @importFrom dplyr rename_if
+#' @rdname summarise_all
+NULL
+
+#' @name group_by_all
+#' @export
+#' @importFrom dplyr group_by_all
+#' @rdname summarise_all
+NULL
+
+#' @name group_by_at
+#' @export
+#' @importFrom dplyr group_by_at
+#' @rdname summarise_all
+NULL
+
+#' @name group_by_if
+#' @export
+#' @importFrom dplyr group_by_if
+#' @rdname summarise_all
+NULL
+
 #' @name mutate_each
 #' @export
 #' @importFrom dplyr mutate_each
@@ -189,7 +287,7 @@ NULL
 #' @name mutate_each_
 #' @export
 #' @importFrom dplyr mutate_each_
-#' @rdname summarise_all
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name summarise_each
@@ -201,8 +299,8 @@ NULL
 #' @name summarise_each_
 #' @export
 #' @importFrom dplyr summarise_each_
-#' @rdname summarise_all
-?NULL
+#' @rdname srvyr-se-deprecated
+NULL
 
 #' @name summarize_each
 #' @export
@@ -213,7 +311,7 @@ NULL
 #' @name summarize_each_
 #' @export
 #' @importFrom dplyr summarize_each_
-#' @rdname summarise_all
+#' @rdname srvyr-se-deprecated
 NULL
 
 #' @name funs
@@ -226,5 +324,23 @@ NULL
 #' @name funs_
 #' @export
 #' @importFrom dplyr funs_
+#' @rdname srvyr-se-deprecated
+NULL
+
+#' @name vars
+#' @export
+#' @importFrom dplyr vars
+#' @rdname summarise_all
+NULL
+
+#' @name all_vars
+#' @export
+#' @importFrom dplyr all_vars
+#' @rdname summarise_all
+NULL
+
+#' @name any_vars
+#' @export
+#' @importFrom dplyr any_vars
 #' @rdname summarise_all
 NULL

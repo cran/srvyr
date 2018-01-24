@@ -3,9 +3,8 @@
 \name{as_survey_design}
 \alias{as_survey_design}
 \alias{as_survey_design.data.frame}
-\alias{as_survey_design.tbl_sql}
 \alias{as_survey_design.survey.design2}
-\alias{as_survey_design_}
+\alias{as_survey_design.tbl_lazy}
 \title{Create a tbl_svy survey object using sampling design}
 \usage{
 as_survey_design(.data, ...)
@@ -13,18 +12,14 @@ as_survey_design(.data, ...)
 \method{as_survey_design}{data.frame}(.data, ids = NULL, probs = NULL,
   strata = NULL, variables = NULL, fpc = NULL, nest = FALSE,
   check_strata = !nest, weights = NULL, pps = FALSE, variance = c("HT",
-  "YG"), uid = NULL, ...)
-
-\method{as_survey_design}{tbl_sql}(.data, ids = NULL, probs = NULL,
-  strata = NULL, variables = NULL, fpc = NULL, nest = FALSE,
-  check_strata = !nest, weights = NULL, pps = FALSE, variance = c("HT",
-  "YG"), uid = NULL, ...)
+  "YG"), ...)
 
 \method{as_survey_design}{survey.design2}(.data, ...)
 
-as_survey_design_(.data, ids = NULL, probs = NULL, strata = NULL,
-  variables = NULL, fpc = NULL, nest = FALSE, check_strata = !nest,
-  weights = NULL, pps = FALSE, variance = c("HT", "YG"), uid = NULL)
+\method{as_survey_design}{tbl_lazy}(.data, ids = NULL, probs = NULL,
+  strata = NULL, variables = NULL, fpc = NULL, nest = FALSE,
+  check_strata = !nest, weights = NULL, pps = FALSE, variance = c("HT",
+  "YG"), ...)
 }
 \arguments{
 \item{.data}{A data frame (which contains the variables specified below)}
@@ -56,9 +51,6 @@ approximation. An object of class ppsmat to use the Horvitz-Thompson estimator.}
 
 \item{variance}{For pps without replacement, use variance="YG" for the Yates-Grundy estimator
 instead of the Horvitz-Thompson estimator}
-
-\item{uid}{Required for databases only, variables that uniquely identify the
-observations of your survey.}
 }
 \value{
 An object of class \code{tbl_svy}
@@ -71,16 +63,9 @@ If provided a data.frame, it is a wrapper
 around \code{\link[survey]{svydesign}}. All survey variables must be included
 in the data.frame itself. Variables are selected by using bare column names, or
 convenience functions described in \code{\link[dplyr]{select}}.
-\code{as_survey_design_} is the standard evaluation counterpart to
-\code{as_survey_design}.
 
 If provided a \code{survey.design2} object from the survey package,
 it will turn it into a srvyr object, so that srvyr functions will work with it
-
-There is also limited and experimental support for databases using dplyr's \code{tbl_sql}
-objects. Not all operations are available for these objects. See
-\code{vignette("databases", package = "dplyr")} for more information on setting
-up databases in dplyr.
 }
 \examples{
 # Examples from ?survey::svydesign
@@ -119,10 +104,11 @@ data(election)
 dpps <- election_pps \%>\%
   as_survey_design(fpc = p, pps = "brewer")
 
-## as_survey_design_ uses standard evaluation
-strata_var <- "stype"
-weights_var <- "pw"
-dstrata2 <- apistrat \%>\%
-  as_survey_design_(strata = strata_var, weights = weights_var)
+# dplyr 0.7 introduced new style of NSE called quosures
+# See `vignette("programming", package = "dplyr")` for details
+st <- quo(stype)
+wt <- quo(pw)
+dstrata <- apistrat \%>\%
+  as_survey_design(strata = !!st, weights = !!wt)
 
 }

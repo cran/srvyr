@@ -91,8 +91,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #      rscales = rep(1 , 80),
 #      mse = TRUE,
 #      type = "JK1",
-#      variables = -c(matches("^pwgtp")),
-#      uid = c(serialno, sporder)
+#      variables = -c(matches("^pwgtp"))
 #    )
 #  
 #  acs_m_db_svy
@@ -165,4 +164,11 @@ knitr::opts_chunk$set(eval = FALSE)
 #                                                ifelse(agep >= 65, "65+", NA)))))) %>%
 #    group_by(agecat) %>%
 #    summarize(pct = survey_mean(na.rm = TRUE))
+
+## ------------------------------------------------------------------------
+#  acs_m_db_svy %>%
+#    select(agep, hicov, sex) %>%
+#    collect() %>%
+#    {survey::svyglm(hicov ~ sex + agep, .)} %>%
+#    summary()
 

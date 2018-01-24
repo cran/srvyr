@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2017-06-22" />
+<meta name="date" content="2018-01-23" />
 
 <title>Databases in srvyr</title>
 
@@ -70,11 +70,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author"><em>Greg Freedman Ellis</em></h4>
-<h4 class="date"><em>2017-06-22</em></h4>
+<h4 class="date"><em>2018-01-23</em></h4>
 
 
 
-<p>Srvyr now has experimental support of database backed surveys. It uses dplyr databases as the backend, not the survey package’s database support, which allows for nearly identical consistent syntax when working with database or local data.frame backed surveys. The actual implementation is similar to the survey package’s in that it stores the survey variables (such as weighting, stratum, etc.) in local memory and so will provide the most benefit when dealing with surveys with a large number of variables, rather than surveys with a large number of observations. It is slower than the survey package’s support, because it is more careful about the sorting order when pulling data from the database, in my testing it is about 2X slower than survey.</p>
+<p>Srvyr 0.3 has a completely rewritten database backend. Using databases that are already stored dplyr’s <code>tbl_lazy</code> objects is now just as easy as working with data stored in regular R data.frames as you don’t need to have a unique identifier. Additionally, it now works more similarly to the survey package’s database code and so shouldn’t be any slower.</p>
 <p>During development, I have tested using SQLite and MonetDBLite database, but in theory other database backends should work as well.</p>
 <p>This vignette shows the basics of how to use srvyr with databases. It is based on analysis from the wonderful resource asdfree ( <a href="http://asdfree.com/">website</a> and <a href="https://github.com/ajdamico/asdfree">github</a> ). Many thanks to <a href="http://github.com/ajdamico">ajdamico</a> and collaborators. Specifically, I have adpated code from <a href="https://github.com/ajdamico/asdfree/blob/d0b965e9672161da086e30471760d08281b74343/American%20Community%20Survey/2011%20single-year%20-%20analysis%20examples.R">American Community Survey - 2011 single year analysis</a> and the associated data preparation scripts.</p>
 <div id="database-setup" class="section level2">
@@ -105,27 +105,27 @@ db &lt;-<span class="st"> </span><span class="kw">src_monetdblite</span>()
 acs_m_db &lt;-<span class="st"> </span><span class="kw">copy_to</span>(db, acs_m, <span class="st">&quot;acs_m&quot;</span>, <span class="dt">temporary =</span> <span class="ot">FALSE</span>)
 
 <span class="co"># Make table read only to reflect real world usage (see advanced topics below).</span>
-db_status &lt;-<span class="st"> </span><span class="kw">dbSendQuery</span>(acs_m_db$src$con, <span class="st">&quot;ALTER TABLE acs_m SET READ ONLY&quot;</span>)
+db_status &lt;-<span class="st"> </span><span class="kw">dbSendQuery</span>(acs_m_db<span class="op">$</span>src<span class="op">$</span>con, <span class="st">&quot;ALTER TABLE acs_m SET READ ONLY&quot;</span>)
 
 <span class="co"># Or, if the data was already stored in the database, you could do this</span>
 <span class="co"># acs_m_data &lt;- tbl(db, sql(&quot;SELECT * FROM acs_m&quot;)) </span></code></pre></div>
 <p>Now that we have the data in the database, we can interact with the database directly using sql commands, or we can use dplyr’s functionality to treat it mostly the same as a local <code>data.frame</code>. However, the data is not stored in memory, so we could work with much larger datasets (though in this case, the data is too small for this to be a problem).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Same results</span>
-acs_m %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(sex) %&gt;%
+acs_m <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))
 
-acs_m_db %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(sex) %&gt;%
+acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))
 
 <span class="co"># But smaller object size</span>
 <span class="kw">object.size</span>(acs_m)
 <span class="kw">object.size</span>(acs_m_db)</code></pre></div>
 <p>Note that though many commands behave exactly the same whether on a local data.frame or database, sometimes more advanced / complicated syntax around variable modification allowed in dplyr does not work on a particular database and so it is better to be more explicit. For example, creating a variable inside of a summarize call does not work (at least with MonetDB). .</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(sex) %&gt;%
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov ==<span class="st"> </span><span class="dv">1</span>))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))
 
 <span class="co"># acs_m_db %&gt;% </span>
 <span class="co">#   group_by(sex) %&gt;%</span>
@@ -136,15 +136,15 @@ acs_m_db %&gt;%<span class="st"> </span>
 <span class="co"># &gt; ....</span>
 
 <span class="co"># Creating the variable separately works as an integer works though</span>
-acs_m_db %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(sex) %&gt;%
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">ifelse</span>(hicov ==<span class="st"> </span><span class="dv">1</span>, 1L, 0L)) %&gt;%
+acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">ifelse</span>(hicov <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, 1L, 0L)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))</code></pre></div>
 <p>Further, sometimes working with variable types can get difficult if you are used to working in R. Notice how in the above, instead of <code>hicov = (hicov == 1)</code>, I wrote out the ifelse statement. If I hadn’t MonetDB would be unable to calculate the mean of the boolean variable created.</p>
 <p>Finally, a major difference when transitioning from dplyr on local data.frames is that not all R functions are translated to SQL. For example, <code>cut()</code> isn’t implemented in SQL, so you can’t create a new variable in the data.frame using it.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(<span class="dt">agecat =</span> <span class="kw">cut</span>(agep, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">19</span>, <span class="dv">35</span>, <span class="dv">50</span>, <span class="dv">65</span>, <span class="dv">200</span>))) %&gt;%
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov ==<span class="st"> </span><span class="dv">1</span>))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(<span class="dt">agecat =</span> <span class="kw">cut</span>(agep, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">19</span>, <span class="dv">35</span>, <span class="dv">50</span>, <span class="dv">65</span>, <span class="dv">200</span>))) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))
 
 <span class="co"># acs_m_db %&gt;% </span>
 <span class="co">#   group_by(agecat = cut(agep, c(0, 19, 35, 50, 65, 200))) %&gt;%</span>
@@ -154,29 +154,28 @@ acs_m_db %&gt;%<span class="st"> </span>
 <span class="co"># &gt; Unable to execute statement....</span>
 <span class="co"># &gt; ...</span>
 
-acs_m_db %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">agecat =</span> <span class="kw">ifelse</span>(agep &lt;<span class="st"> </span><span class="dv">19</span>, <span class="st">&quot;0-18&quot;</span>, 
-                         <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">19</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">35</span>, <span class="st">&quot;19-34&quot;</span>, 
-                                <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">35</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">50</span>, <span class="st">&quot;35-49&quot;</span>, 
-                                       <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">50</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;50-64&quot;</span>, 
-                                              <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) %&gt;%
-<span class="st">  </span><span class="kw">group_by</span>(agecat) %&gt;%<span class="st"> </span>
+acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">agecat =</span> <span class="kw">ifelse</span>(agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">19</span>, <span class="st">&quot;0-18&quot;</span>, 
+                         <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">19</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">35</span>, <span class="st">&quot;19-34&quot;</span>, 
+                                <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">35</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">50</span>, <span class="st">&quot;35-49&quot;</span>, 
+                                       <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">50</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;50-64&quot;</span>, 
+                                              <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(agecat) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))</code></pre></div>
-<p>For more information on the specifics of databases with dplyr, see <code>vignette(&quot;database&quot;, package = dplyr)</code>, the <code>DBI</code> package or the specific database packages, like <code>MonetDBLite</code> or <code>RSQLite</code>.</p>
+<p>For more information on the specifics of databases with dplyr, see <code>vignette(&quot;database&quot;, package = &quot;dplyr&quot;)</code>, the <code>DBI</code> package or the specific database packages, like <code>MonetDBLite</code> or <code>RSQLite</code>.</p>
 </div>
 <div id="srvyr-setup" class="section level2">
 <h2>Srvyr Setup</h2>
 <p>Srvyr commands are nearly identical to old. The only difference for setup is that you need a variable that uniquely identifieds each row in the database (uid).</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m_db_svy &lt;-<span class="st"> </span>acs_m_db %&gt;%<span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m_db_svy &lt;-<span class="st"> </span>acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">as_survey_rep</span>(
     <span class="dt">weight =</span> pwgtp,
     <span class="dt">repweights =</span> <span class="kw">matches</span>(<span class="st">&quot;pwgtp[0-9]+&quot;</span>) ,
-    <span class="dt">scale =</span> <span class="dv">4</span> /<span class="st"> </span><span class="dv">80</span>,
+    <span class="dt">scale =</span> <span class="dv">4</span> <span class="op">/</span><span class="st"> </span><span class="dv">80</span>,
     <span class="dt">rscales =</span> <span class="kw">rep</span>(<span class="dv">1</span> , <span class="dv">80</span>),
     <span class="dt">mse =</span> <span class="ot">TRUE</span>,
     <span class="dt">type =</span> <span class="st">&quot;JK1&quot;</span>, 
-    <span class="dt">variables =</span> -<span class="kw">c</span>(<span class="kw">matches</span>(<span class="st">&quot;^pwgtp&quot;</span>)),
-    <span class="dt">uid =</span> <span class="kw">c</span>(serialno, sporder)
+    <span class="dt">variables =</span> <span class="op">-</span><span class="kw">c</span>(<span class="kw">matches</span>(<span class="st">&quot;^pwgtp&quot;</span>))
   )
 
 acs_m_db_svy</code></pre></div>
@@ -189,41 +188,41 @@ acs_m_db_svy</code></pre></div>
 <p>The following anlaysis is based on the asdfree analysis and shows some basi analysis on the total populaiton, insurance coverage, age and sex.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># You can calculate the population of the united states #</span>
 <span class="co"># by state</span>
-acs_m_db_svy %&gt;%
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">one =</span> 1L) %&gt;%<span class="st"> </span><span class="co"># Note that because of weird behavior of MonetDB, need to use 1L not just 1</span>
-<span class="st">  </span><span class="kw">group_by</span>(st) %&gt;%<span class="st"> </span>
+acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">one =</span> 1L) <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># Note that because of weird behavior of MonetDB, need to use 1L not just 1</span>
+<span class="st">  </span><span class="kw">group_by</span>(st) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">count =</span> <span class="kw">survey_total</span>(one))
 
 <span class="co"># Or the average age of downloaded states</span>
-acs_m_db_svy %&gt;%
+acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_mean</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 <span class="co"># Average age by state</span>
-acs_m_db_svy %&gt;%
-<span class="st">  </span><span class="kw">group_by</span>(st) %&gt;%<span class="st"> </span>
+acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(st) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_mean</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 <span class="co"># percent uninsured - nationwide (of downloaded states)</span>
-acs_m_db_svy %&gt;%
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(hicov) %&gt;%<span class="st"> </span>
+acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(hicov) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 <span class="co"># by state</span>
-acs_m_db_svy %&gt;%
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(st, hicov) %&gt;%<span class="st"> </span>
+acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(st, hicov) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 
 <span class="co"># 25th, median, and 75th percentile of age of residents of the united states (downloaded states)</span>
-acs_m_db_svy %&gt;%
+acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_quantile</span>(agep, <span class="kw">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>), <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 
 <span class="co"># Filter works, so we can restrict the acs_m object to females only</span>
-acs_m_db_svy_female &lt;-<span class="st"> </span>acs_m_db_svy %&gt;%
-<span class="st">  </span><span class="kw">filter</span>(sex ==<span class="st"> </span><span class="dv">2</span>)
+acs_m_db_svy_female &lt;-<span class="st"> </span>acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(sex <span class="op">==</span><span class="st"> </span><span class="dv">2</span>)
 
 <span class="co"># Now any of the above commands can be re-run using the acs_m_female object</span>
 <span class="co"># instead of the acs_m object in order to analyze females only</span>
@@ -231,11 +230,11 @@ acs_m_db_svy_female &lt;-<span class="st"> </span>acs_m_db_svy %&gt;%
 <span class="co"># This is equivalent to using acs_m, and applying the filter every time.</span>
 
 <span class="co"># average age - nationwide (of downloaded states), restricted to females</span>
-acs_m_db_svy_female %&gt;%
+acs_m_db_svy_female <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_mean</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 <span class="co"># median age - nationwide (of downloaded states), restricted to females</span>
-acs_m_db_svy_female %&gt;%
+acs_m_db_svy_female <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_median</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
 
@@ -243,23 +242,28 @@ acs_m_db_svy_female %&gt;%
 <span class="co"># all of them are. For example, when constructing a new age category </span>
 <span class="co"># variable in the dataset neither findIntervals nor cut work on databases, </span>
 <span class="co"># so we have to spell out groups with ifelse()</span>
-acs_m_db_svy %&gt;%<span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">agecat =</span> <span class="kw">ifelse</span>(agep &lt;<span class="st"> </span><span class="dv">19</span>, <span class="st">&quot;0-18&quot;</span>, 
-                         <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">19</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">35</span>, <span class="st">&quot;19-34&quot;</span>, 
-                                <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">35</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">50</span>, <span class="st">&quot;35-49&quot;</span>, 
-                                       <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">50</span> &amp;<span class="st"> </span>agep &lt;<span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;50-64&quot;</span>, 
-                                              <span class="kw">ifelse</span>(agep &gt;=<span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) %&gt;%
-<span class="st">  </span><span class="kw">group_by</span>(agecat) %&gt;%<span class="st"> </span>
+acs_m_db_svy <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">agecat =</span> <span class="kw">ifelse</span>(agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">19</span>, <span class="st">&quot;0-18&quot;</span>, 
+                         <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">19</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">35</span>, <span class="st">&quot;19-34&quot;</span>, 
+                                <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">35</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">50</span>, <span class="st">&quot;35-49&quot;</span>, 
+                                       <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">50</span> <span class="op">&amp;</span><span class="st"> </span>agep <span class="op">&lt;</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;50-64&quot;</span>, 
+                                              <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(agecat) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
 <div id="advanced-topics" class="section level2">
 <h2>Advanced Topics</h2>
+<div id="running-survey-commands-with-collect" class="section level3">
+<h3>Running survey commands with collect</h3>
+<p>If you’d like to run a command from the survey package, you’ll need to collect the data locally first. You can select only the variables you’ll need for the analysis so that you don’t have to store the whole dataset in memory.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m_db_svy <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(agep, hicov, sex) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">collect</span>() <span class="op">%&gt;%</span>
+<span class="st">  </span>{survey<span class="op">::</span><span class="kw">svyglm</span>(hicov <span class="op">~</span><span class="st"> </span>sex <span class="op">+</span><span class="st"> </span>agep, .)} <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summary</span>()</code></pre></div>
+</div>
 <div id="write-access" class="section level3">
 <h3>Write Access</h3>
 <p>Note that srvyr does not require write access to perform calculations, the database created in this vignette was set to read-only at the beginning. This can be important when you want to make sure that your original data is not altered accidentally, or if you don’t have write access to a database.</p>
-</div>
-<div id="speed" class="section level3">
-<h3>Speed</h3>
-<p>Srvyr using a database is significantly slower than using the survey package’s database support, which is in turn slower than using local data.frames. The real advantages of databases are for working with sureys that are very wide (many variables). Srvyr’s advantage over the survey package comes down to the syntax, if you prefer the consistent style of srvyr you’ll need to be willing to stomach the performance loss.</p>
 </div>
 </div>
 </div>
