@@ -4,8 +4,8 @@ Title: 'dplyr'-Like Syntax for Summary Statistics of Survey Data
 Description: Use piping, verbs like 'group_by' and 'summarize', and other
     'dplyr' inspired syntactic style when calculating summary statistics on survey
     data using functions from the 'survey' package.
-Version: 0.3.0
-Date: 2018-01-23
+Version: 0.3.1
+Date: 2018-03-10
 Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com", role = c("aut", "cre")),
   person("Thomas", "Lumley", role = "ctb")
   )
@@ -20,9 +20,9 @@ Suggests: convey, dbplyr, ggplot2, knitr, Matrix, rmarkdown, pander,
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2018-01-24 03:20:58 UTC; greg
+Packaged: 2018-03-10 18:31:00 UTC; greg
 Author: Greg Freedman Ellis [aut, cre],
   Thomas Lumley [ctb]
 Maintainer: Greg Freedman Ellis <greg.freedman@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-01-24 04:20:49 UTC
+Date/Publication: 2018-03-10 18:45:40 UTC

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2018-01-23" />
+<meta name="date" content="2018-03-10" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author"><em>Greg Freedman</em></h4>
-<h4 class="date"><em>2018-01-23</em></h4>
+<h4 class="date"><em>2018-03-10</em></h4>
 
 
 
@@ -167,9 +167,9 @@ strat_design_srvyr <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 3 x 5
 ##   stype api_increase api_increase_se api_decrease api_decrease_se
 ##   &lt;fct&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
-## 1 E             4067           119          354             119  
-## 2 H              498            49.4        257              49.4
-## 3 M              998            19.9         20.4            19.9</code></pre>
+## 1 E            4067.           119.         354.            119. 
+## 2 H             498.            49.4        257.             49.4
+## 3 M             998.            19.9         20.4            19.9</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Using survey</span>
 <span class="kw">svyby</span>(<span class="op">~</span>api_diff <span class="op">&gt;=</span><span class="st"> </span><span class="dv">0</span>, <span class="op">~</span>stype, strat_design_survey, svytotal)</code></pre></div>
 <pre><code>##   stype api_diff &gt;= 0FALSE api_diff &gt;= 0TRUE se.api_diff &gt;= 0FALSE
@@ -192,8 +192,8 @@ srs_design_srvyr <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 2 x 5
 ##   awards proportion proportion_se total total_se
 ##   &lt;fct&gt;       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
-## 1 No          0.380        0.0338  2354      210
-## 2 Yes         0.620        0.0338  3840      210</code></pre>
+## 1 No          0.380        0.0338 2354.     210.
+## 2 Yes         0.620        0.0338 3840.     210.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Using survey</span>
 <span class="kw">svymean</span>(<span class="op">~</span>awards, srs_design_survey)</code></pre></div>
 <pre><code>##           mean     SE
@@ -291,9 +291,9 @@ srs_design_srvyr <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 3 x 5
 ##   stype api_increase api_increase_se api_decrease api_decrease_se
 ##   &lt;fct&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
-## 1 E             4057             205          341            98.5
-## 2 H              557             124          217            79.4
-## 3 M              898             152          124            60.5</code></pre>
+## 1 E            4057.            205.         341.            98.5
+## 2 H             557.            124.         217.            79.4
+## 3 M             898.            152.         124.            60.5</code></pre>
 <p>Srvyr will also follow dplyr’s lead on deprecating the old method of NSE, the so-called “underscore functions” (like <code>summarize_</code>). Currently, they have been soft-deprecated, but I expect them to be removed altogether in some future version of srvyr.</p>
 </div>
 <div id="scoped-functions" class="section level2">
@@ -305,7 +305,7 @@ strat_design <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 1 x 6
 ##   api00 api00_se api99 api99_se api.stu api.stu_se
 ##   &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;      &lt;dbl&gt;
-## 1   662     9.41   629     9.96     498       16.1</code></pre>
+## 1  662.     9.41  629.     9.96    498.       16.1</code></pre>
 <p>The dplyr documentation <code>dplyr::scoped</code> provides more details.</p>
 </div>
 </div>

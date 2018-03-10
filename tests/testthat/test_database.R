@@ -5,6 +5,8 @@ suppressPackageStartupMessages({
   library(dplyr)
 })
 
+source("utilities.R")
+
 if (suppressPackageStartupMessages(require(dbplyr))) {
   has_rsqlite <- suppressPackageStartupMessages(require(RSQLite))
   has_monetdb <- suppressPackageStartupMessages(require(MonetDBLite))
@@ -27,7 +29,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       names(cleaned) <- stringr::str_replace_all(names(cleaned), "\\.", "")
       apistrat_db <- copy_to(con, cleaned)
       db_avail <- TRUE
-    } else if (db == "MonetDBLite" && has_monetdb) {
+    } else if (db == "MonetDBLite" && !has_monetdb) {
       db_avail <- FALSE
     }
 
@@ -41,7 +43,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
         as_survey_design(strata = stype, weights = pw)
 
       # Can do a basic summarize
-      expect_equal(
+      expect_df_equal(
         dstrata %>%
           summarize(
             api99_mn = survey_mean(api99),
@@ -55,7 +57,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       )
 
       # Can do a summarize with a calculation in it
-      expect_equal(
+      expect_df_equal(
         dstrata %>%
           summarize(api_diff = survey_mean(api00 - api99)),
         local_dstrata %>%
@@ -63,7 +65,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       )
 
       # Can do a grouped summarize
-      expect_equal(
+      expect_df_equal(
         suppressWarnings(dstrata %>%
           group_by(stype = as.character(stype)) %>%
           summarize(api99 = survey_mean(api99))),
@@ -73,7 +75,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       )
 
       # Can filter and summarize
-      expect_equal(
+      expect_df_equal(
         suppressWarnings(dstrata %>%
           filter(stype == "E") %>%
           summarize(api99 = survey_mean(api99))),
@@ -83,7 +85,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       )
 
       # Can mutate and summarize
-      expect_equal(
+      expect_df_equal(
         suppressWarnings(dstrata %>%
           mutate(api_diff = api00 - api99) %>%
           summarize(api99 = survey_mean(api_diff))),
@@ -93,7 +95,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       )
 
       # Can collect and then use survey functions
-      expect_equal(
+      expect_df_equal(
         suppressWarnings(dstrata %>%
                            select(api99, stype) %>%
                            collect() %>%
@@ -124,7 +126,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
                                                        combined_weights = FALSE))
 
       # Can do a basic summarize
-      expect_equal(
+      expect_df_equal(
         scdrep %>%
           summarize(esa = survey_mean(esa)),
         scdrep_local %>%
@@ -170,4 +172,31 @@ test_that("Can convert from survey DB-backed surveys to srvyr ones", {
   expect_equal(mean_survey[[1]], mean_srvyr$x)
   expect_equal(SE(mean_survey)[[1]], mean_srvyr$x_se)
   dbDisconnect(db_rclus1$db$connection)
+
+  # Updates from survey-db get converted to srvyr-db
+  dbclus1<-svydesign(id=~dnum, weights=~pw, fpc=~fpc,
+                     data="apiclus1",dbtype="SQLite", dbname=system.file("api.db",package="survey"))
+  dbclus1 <- update(dbclus1, easy_update = api99 + 1)
+  easy_mean_survey <- svymean(~easy_update, dbclus1)
+
+  dbclus1_srvyr <- as_survey(dbclus1)
+  easy_mean_srvyr <- summarize(dbclus1_srvyr, x = survey_mean(easy_update))
+
+  expect_equal(easy_mean_survey[[1]], easy_mean_srvyr$x)
+  expect_equal(SE(easy_mean_survey)[[1]], easy_mean_srvyr$x_se)
+
+  # Subsers from survey-db get converted to srbyr-db
+  dbclus1_subset <- subset(dbclus1, stype == "E")
+  subset_mean_survey <- svymean(~api99, dbclus1_subset)
+  dbclus1_srvyr <- as_survey(dbclus1_subset)
+  subset_mean_srvyr <- summarize(dbclus1_srvyr, x = survey_mean(api99))
+  expect_equal(subset_mean_survey[[1]], subset_mean_srvyr$x)
+  expect_equal(SE(subset_mean_survey)[[1]], subset_mean_srvyr$x_se)
+
+  # Decent warning when update is too complicated for srvyr
+  plus_one <- function(x) x + 1
+  dbclus1 <- update(dbclus1, hard_update = plus_one(api99))
+  expect_warning(as_survey(dbclus1), "Could not convert variable 'hard_update'")
+
+  dbDisconnect(dbclus1$db$connection)
 })
