@@ -1,6 +1,6 @@
-88f8c63770eef67538617163247f44d6 *DESCRIPTION
+5a2dd78c635e823010b647a09fa44668 *DESCRIPTION
 85f5346321ac5492f979199a8f50c649 *NAMESPACE
-921207f57b7523d5ec40cee99a73e3a3 *NEWS.md
+3ed974c660354d6c4059c938baa7b7c9 *NEWS.md
 b372363657fcc9f7a8387cba1f717a1a *R/as_survey.r
 9a921191249037ee3fce1ed00ed5bbd3 *R/as_survey_design.r
 aef9304500de4a6920d97baef66855a3 *R/as_survey_rep.r
@@ -18,7 +18,7 @@ d41d8cd98f00b204e9800998ecf8427e *R/se_deprecate.R
 39a052c5757370efcd4ddf0a9d0f49aa *R/summarise.r
 bb28f8d13526cba3792ffb3de7adc7ba *R/survey_package_functions.R
 4e8b798aaab2f7e2ee9fbd42033b84fc *R/survey_statistics.r
-bfee4fc01d0218d0297475a0a7a8e0f4 *R/survey_statistics_helpers.R
+2e071da651a1aaa291bc4213c0e1c78d *R/survey_statistics_helpers.R
 17e895a273297e5e22e530bfca476368 *R/survey_vars.r
 12ec3b595642b31bfe3c14e09b5e07ae *R/svy_context.R
 8bec5192faf79ccda72fb4a4687bfadb *R/tbl-svy.r
@@ -27,13 +27,13 @@ b3454464cf186dc795c20c7622f84743 *README.md
 0de8d9b8eaf0b57c010a85be06a894ef *build/vignette.rds
 bcf08d5984d36eb65c30c0b85e4e81cd *inst/doc/extending-srvyr.R
 ce45a4968b31f2a50a32f26c186957a3 *inst/doc/extending-srvyr.Rmd
-79b8d090aab6180ba5dac2585e60646c *inst/doc/extending-srvyr.html
+7b5d8cfb630556fc80af4e5ab93ca3ac *inst/doc/extending-srvyr.html
 30bc9f1f43549c624465987501dc2afc *inst/doc/srvyr-database.R
 195da178a983da310fbf47dfc4072d4d *inst/doc/srvyr-database.Rmd
-b548ee04ed098b03ef58c38e68d337cb *inst/doc/srvyr-database.html
+79b74580e4331a631dc899a11f24b489 *inst/doc/srvyr-database.html
 c6c27c3fbcd48c641a8e61db0ccc1b1f *inst/doc/srvyr-vs-survey.R
 656ff60812acc1cad3478c0234e8c21e *inst/doc/srvyr-vs-survey.Rmd
-2ba409cec081fadbf56dcd8e8085657f *inst/doc/srvyr-vs-survey.html
+fe8112ce3731d65aed5878dea3e25d9f *inst/doc/srvyr-vs-survey.html
 cf1f3e33e785670886431284845254bf *man/as_survey.Rd
 0d743478f93e4662d02049efd8e2b5d6 *man/as_survey_design.Rd
 e0c8d970c9d590dde09d45b6397a0359 *man/as_survey_rep.Rd
@@ -74,7 +74,7 @@ c6fa77545eeca225aec29ee18e5534eb *tests/testthat/test_srvyr_select_vars.R
 5f40713f5d3acd52c1171200eaa3b84c *tests/testthat/test_survey_mean_factor.r
 3b0f3db2d26eed9a82efb818c0663882 *tests/testthat/test_survey_package.r
 e0780c4e8bae36a77cea9b6bc5361ef0 *tests/testthat/test_survey_proportion.R
-8accf7f056eaaa0433f324fa91f9a56f *tests/testthat/test_survey_statistics.r
+0acaae2f1d9779b3b19f80a434bda137 *tests/testthat/test_survey_statistics.r
 758f9fa308428ba19376c26eda0d067f *tests/testthat/test_survey_statistics_basic.r
 c003a524d1e45f82b886aa6285fe529d *tests/testthat/utilities.R
 cabf4aeb90129b1b2a0dbf5cebc7e448 *tools/logo.png

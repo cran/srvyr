@@ -1,3 +1,7 @@
+# srvyr 0.3.2
+* Bug fix for calculating multiple quantiles on grouped data
+  (#38, thanks @iantperry)
+
 # srvyr 0.3.1
 * When converting from a survey db-backed survey to a srvyr one
   srvyr now tries to capture the updates you've already sent.

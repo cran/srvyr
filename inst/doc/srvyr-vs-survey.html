@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2018-03-10" />
+<meta name="date" content="2018-05-03" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author"><em>Greg Freedman</em></h4>
-<h4 class="date"><em>2018-03-10</em></h4>
+<h4 class="date"><em>2018-05-03</em></h4>
 
 
 
@@ -192,8 +192,8 @@ srs_design_srvyr <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 2 x 5
 ##   awards proportion proportion_se total total_se
 ##   &lt;fct&gt;       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
-## 1 No          0.380        0.0338 2354.     210.
-## 2 Yes         0.620        0.0338 3840.     210.</code></pre>
+## 1 No           0.38        0.0338 2354.     210.
+## 2 Yes          0.62        0.0338 3840.     210.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Using survey</span>
 <span class="kw">svymean</span>(<span class="op">~</span>awards, srs_design_survey)</code></pre></div>
 <pre><code>##           mean     SE

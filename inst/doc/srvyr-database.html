@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2018-03-10" />
+<meta name="date" content="2018-05-03" />
 
 <title>Databases in srvyr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author"><em>Greg Freedman Ellis</em></h4>
-<h4 class="date"><em>2018-03-10</em></h4>
+<h4 class="date"><em>2018-05-03</em></h4>
 
 
 
@@ -277,10 +277,10 @@ acs_m_db_svy <span class="op">%&gt;%</span>
 <pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
 ## * median</code></pre>
 <pre><code>## # A tibble: 2 x 3
-##   st       count count_se
-##   &lt;chr&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-## 1 02     722718.       0.
-## 2 15    1374810.       0.</code></pre>
+##   st      count count_se
+##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+## 1 02     722718        0
+## 2 15    1374810        0</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Or the average age of downloaded states</span>
 acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_mean</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
@@ -329,7 +329,7 @@ acs_m_db_svy <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 1 x 3
 ##   agep_q25 agep_q50 agep_q75
 ##      &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-## 1      19.      36.      55.</code></pre>
+## 1       19       36       55</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Filter works, so we can restrict the acs_m object to females only</span>
 acs_m_db_svy_female &lt;-<span class="st"> </span>acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(sex <span class="op">==</span><span class="st"> </span><span class="dv">2</span>)
@@ -362,7 +362,7 @@ acs_m_db_svy_female <span class="op">%&gt;%</span>
 <pre><code>## # A tibble: 1 x 1
 ##   agep_q50
 ##      &lt;dbl&gt;
-## 1      37.</code></pre>
+## 1       37</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Note that though some R functions are translated by dplyr into SQL, not</span>
 <span class="co"># all of them are. For example, when constructing a new age category </span>
 <span class="co"># variable in the dataset neither findIntervals nor cut work on databases, </span>
