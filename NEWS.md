@@ -1,3 +1,10 @@
+# srvyr 0.3.3
+* Add warning to explain that design effects cannot be calculated on
+  proportions. (#39, thanks @mlaviolet)
+  
+* Remove dependency on stringr in tests and add DBI to suggests
+  so that test dependencies are correctly specified (#40, thanks CRAN!)
+
 # srvyr 0.3.2
 * Bug fix for calculating multiple quantiles on grouped data
   (#38, thanks @iantperry)

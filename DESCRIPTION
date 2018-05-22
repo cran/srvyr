@@ -4,8 +4,8 @@ Title: 'dplyr'-Like Syntax for Summary Statistics of Survey Data
 Description: Use piping, verbs like 'group_by' and 'summarize', and other
     'dplyr' inspired syntactic style when calculating summary statistics on survey
     data using functions from the 'survey' package.
-Version: 0.3.2
-Date: 2018-05-03
+Version: 0.3.3
+Date: 2018-05-21
 Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com", role = c("aut", "cre")),
   person("Thomas", "Lumley", role = "ctb")
   )
@@ -15,14 +15,14 @@ Depends: R (>= 3.1.2)
 Imports: dplyr (>= 0.7), magrittr, rlang, survey, tibble
 License: GPL-2 | GPL-3
 LazyData: TRUE
-Suggests: convey, dbplyr, ggplot2, knitr, Matrix, rmarkdown, pander,
-        RSQLite, MonetDBLite, survival, testthat, vardpoor
+Suggests: convey, DBI, dbplyr, ggplot2, knitr, Matrix, rmarkdown,
+        pander, RSQLite, MonetDBLite, survival, testthat, vardpoor
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2018-05-04 02:36:56 UTC; greg
+Packaged: 2018-05-22 01:58:29 UTC; greg
 Author: Greg Freedman Ellis [aut, cre],
   Thomas Lumley [ctb]
 Maintainer: Greg Freedman Ellis <greg.freedman@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-05-04 12:05:50 UTC
+Date/Publication: 2018-05-22 10:08:03 UTC

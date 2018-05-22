@@ -1,6 +1,6 @@
-5a2dd78c635e823010b647a09fa44668 *DESCRIPTION
+7de2c589acd53ff0a6047074b4b09286 *DESCRIPTION
 85f5346321ac5492f979199a8f50c649 *NAMESPACE
-3ed974c660354d6c4059c938baa7b7c9 *NEWS.md
+e398b6157483875c3b4e474a947db558 *NEWS.md
 b372363657fcc9f7a8387cba1f717a1a *R/as_survey.r
 9a921191249037ee3fce1ed00ed5bbd3 *R/as_survey_design.r
 aef9304500de4a6920d97baef66855a3 *R/as_survey_rep.r
@@ -17,7 +17,7 @@ d41d8cd98f00b204e9800998ecf8427e *R/se_deprecate.R
 82dfc9024ca16f6481ed89c28ac54650 *R/subset_svy_vars.R
 39a052c5757370efcd4ddf0a9d0f49aa *R/summarise.r
 bb28f8d13526cba3792ffb3de7adc7ba *R/survey_package_functions.R
-4e8b798aaab2f7e2ee9fbd42033b84fc *R/survey_statistics.r
+ccb136224b3bdffeb06583b23af428a5 *R/survey_statistics.r
 2e071da651a1aaa291bc4213c0e1c78d *R/survey_statistics_helpers.R
 17e895a273297e5e22e530bfca476368 *R/survey_vars.r
 12ec3b595642b31bfe3c14e09b5e07ae *R/svy_context.R
@@ -27,13 +27,13 @@ b3454464cf186dc795c20c7622f84743 *README.md
 0de8d9b8eaf0b57c010a85be06a894ef *build/vignette.rds
 bcf08d5984d36eb65c30c0b85e4e81cd *inst/doc/extending-srvyr.R
 ce45a4968b31f2a50a32f26c186957a3 *inst/doc/extending-srvyr.Rmd
-7b5d8cfb630556fc80af4e5ab93ca3ac *inst/doc/extending-srvyr.html
+fc1ee91bb7ac6d034b34bf914e575e4a *inst/doc/extending-srvyr.html
 30bc9f1f43549c624465987501dc2afc *inst/doc/srvyr-database.R
 195da178a983da310fbf47dfc4072d4d *inst/doc/srvyr-database.Rmd
-79b74580e4331a631dc899a11f24b489 *inst/doc/srvyr-database.html
+bc25c3c1e88a4fac619225fd1d7ca2e0 *inst/doc/srvyr-database.html
 c6c27c3fbcd48c641a8e61db0ccc1b1f *inst/doc/srvyr-vs-survey.R
 656ff60812acc1cad3478c0234e8c21e *inst/doc/srvyr-vs-survey.Rmd
-fe8112ce3731d65aed5878dea3e25d9f *inst/doc/srvyr-vs-survey.html
+1b9d88876a3b580d1547c9323869f30e *inst/doc/srvyr-vs-survey.html
 cf1f3e33e785670886431284845254bf *man/as_survey.Rd
 0d743478f93e4662d02049efd8e2b5d6 *man/as_survey_design.Rd
 e0c8d970c9d590dde09d45b6397a0359 *man/as_survey_rep.Rd
@@ -68,7 +68,7 @@ fb50dc134ecaef97dd8181a21319d2a9 *tests/testthat/test_as_survey.r
 2b32e98c75b436aef189763a9b55d3c8 *tests/testthat/test_as_survey_twophase.r
 89d4520533e942129e92e28c937c9dd5 *tests/testthat/test_basic_example.r
 0c20ddf3486f6302b49898063ce10d91 *tests/testthat/test_cascade.r
-e08e9ddd81845b81207d0ccdfdc630a0 *tests/testthat/test_database.R
+4bed9462f033ff0aa34fe6ca339b8bc2 *tests/testthat/test_database.R
 3d419c72c1dcf33cbf286607bcde1b3b *tests/testthat/test_level.R
 c6fa77545eeca225aec29ee18e5534eb *tests/testthat/test_srvyr_select_vars.R
 5f40713f5d3acd52c1171200eaa3b84c *tests/testthat/test_survey_mean_factor.r
