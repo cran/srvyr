@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2018-05-21" />
+<meta name="date" content="2019-01-20" />
 
 <title>Databases in srvyr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author"><em>Greg Freedman Ellis</em></h4>
-<h4 class="date"><em>2018-05-21</em></h4>
+<h4 class="date"><em>2019-01-20</em></h4>
 
 
 
@@ -124,8 +124,6 @@ acs_m <span class="op">%&gt;%</span><span class="st"> </span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## Warning: Missing values are always removed in SQL.
 ## Use `AVG(x, na.rm = TRUE)` to silence this warning</code></pre>
 <pre><code>## # Source:   lazy query [?? x 2]
@@ -136,9 +134,9 @@ acs_m <span class="op">%&gt;%</span><span class="st"> </span>
 ## 2     2  1.10</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># But smaller object size</span>
 <span class="kw">object.size</span>(acs_m)</code></pre></div>
-<pre><code>## 7775680 bytes</code></pre>
+<pre><code>## 7777312 bytes</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(acs_m_db)</code></pre></div>
-<pre><code>## 8136 bytes</code></pre>
+<pre><code>## 9120 bytes</code></pre>
 <p>Note that though many commands behave exactly the same whether on a local data.frame or database, sometimes more advanced / complicated syntax around variable modification allowed in dplyr does not work on a particular database and so it is better to be more explicit. For example, creating a variable inside of a summarize call does not work (at least with MonetDB). .</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
@@ -161,12 +159,8 @@ acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(sex) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">ifelse</span>(hicov <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, 1L, 0L)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## Warning: Missing values are always removed in SQL.
 ## Use `AVG(x, na.rm = TRUE)` to silence this warning</code></pre>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # Source:   lazy query [?? x 2]
 ## # Database: MonetDBEmbeddedConnection
 ##     sex hicov
@@ -178,6 +172,8 @@ acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">acs_m <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(<span class="dt">agecat =</span> <span class="kw">cut</span>(agep, <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">19</span>, <span class="dv">35</span>, <span class="dv">50</span>, <span class="dv">65</span>, <span class="dv">200</span>))) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))</code></pre></div>
+<pre><code>## Warning: Factor `agecat` contains implicit NA, consider using
+## `forcats::fct_explicit_na`</code></pre>
 <pre><code>## # A tibble: 6 x 2
 ##   agecat   hicov
 ##   &lt;fct&gt;    &lt;dbl&gt;
@@ -203,12 +199,8 @@ acs_m_db <span class="op">%&gt;%</span><span class="st"> </span>
                                               <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">group_by</span>(agecat) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">hicov =</span> <span class="kw">mean</span>(hicov))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## Warning: Missing values are always removed in SQL.
 ## Use `AVG(x, na.rm = TRUE)` to silence this warning</code></pre>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # Source:   lazy query [?? x 2]
 ## # Database: MonetDBEmbeddedConnection
 ##   agecat hicov
@@ -262,7 +254,7 @@ acs_m_db_svy</code></pre></div>
 ##   (chr)</code></pre>
 <p>Because srvyr stores the survey variables locally, the srvyr object takes up much more memory than the dplyr one. However, this object would not grow in size if you added more data variables to your survey, so if your survey is very wide, it will save a lot space.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">object.size</span>(acs_m_db_svy)</code></pre></div>
-<pre><code>## 8214208 bytes</code></pre>
+<pre><code>## 8390152 bytes</code></pre>
 </div>
 <div id="analysis" class="section level1">
 <h1>Analysis</h1>
@@ -274,8 +266,6 @@ acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">one =</span> 1L) <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># Note that because of weird behavior of MonetDB, need to use 1L not just 1</span>
 <span class="st">  </span><span class="kw">group_by</span>(st) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">count =</span> <span class="kw">survey_total</span>(one))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 2 x 3
 ##   st      count count_se
 ##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;
@@ -302,8 +292,6 @@ acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(hicov) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 2 x 3
 ##   hicov   pct  pct_se
 ##   &lt;chr&gt; &lt;dbl&gt;   &lt;dbl&gt;
@@ -314,8 +302,6 @@ acs_m_db_svy <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">hicov =</span> <span class="kw">as.character</span>(hicov)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(st, hicov) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 4 x 4
 ##   st    hicov    pct  pct_se
 ##   &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;
@@ -342,11 +328,6 @@ acs_m_db_svy_female &lt;-<span class="st"> </span>acs_m_db_svy <span class="op">
 <span class="co"># average age - nationwide (of downloaded states), restricted to females</span>
 acs_m_db_svy_female <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_mean</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median
-
-## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 1 x 2
 ##    agep agep_se
 ##   &lt;dbl&gt;   &lt;dbl&gt;
@@ -354,11 +335,6 @@ acs_m_db_svy_female <span class="op">%&gt;%</span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># median age - nationwide (of downloaded states), restricted to females</span>
 acs_m_db_svy_female <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">agep =</span> <span class="kw">survey_median</span>(agep, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median
-
-## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 1 x 1
 ##   agep_q50
 ##      &lt;dbl&gt;
@@ -375,8 +351,6 @@ acs_m_db_svy <span class="op">%&gt;%</span><span class="st"> </span>
                                               <span class="kw">ifelse</span>(agep <span class="op">&gt;=</span><span class="st"> </span><span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="ot">NA</span>)))))) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">group_by</span>(agecat) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">pct =</span> <span class="kw">survey_mean</span>(<span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<pre><code>## Warning: Translator is missing window variants of the following aggregate functions:
-## * median</code></pre>
 <pre><code>## # A tibble: 5 x 3
 ##   agecat   pct   pct_se
 ##   &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;

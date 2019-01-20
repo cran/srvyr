@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2018-05-21" />
+<meta name="date" content="2019-01-20" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author"><em>Greg Freedman</em></h4>
-<h4 class="date"><em>2018-05-21</em></h4>
+<h4 class="date"><em>2019-01-20</em></h4>
 
 
 
@@ -298,7 +298,7 @@ srs_design_srvyr <span class="op">%&gt;%</span>
 </div>
 <div id="scoped-functions" class="section level2">
 <h2>Scoped functions</h2>
-<p>Srvyr has also been able to take advantage of the new-ish dplyr “scoped” variants of the main manipulation functions like <code>summarize_at()</code>. These functions allow you to quickly calculate variables for multiple variables. For example:</p>
+<p>Srvyr has also been able to take advantage of the new-ish dplyr “scoped” variants of the main manipulation functions like <code>summarize_at()</code>. These functions allow you to quickly calculate summary statistics for multiple variables. For example:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Calculate survey mean for all variables that have names starting with &quot;api&quot;</span>
 strat_design <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize_at</span>(<span class="kw">vars</span>(<span class="kw">starts_with</span>(<span class="st">&quot;api&quot;</span>)), survey_mean)</code></pre></div>

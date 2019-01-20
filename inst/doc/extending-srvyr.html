@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2018-05-21" />
+<meta name="date" content="2019-01-20" />
 
 <title>Extending srvyr</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Extending srvyr</h1>
 <h4 class="author"><em>Greg Freedman Ellis</em></h4>
-<h4 class="date"><em>2018-05-21</em></h4>
+<h4 class="date"><em>2019-01-20</em></h4>
 
 
 
@@ -78,9 +78,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <pre><code>## Loading required package: vardpoor</code></pre>
 <pre><code>## Loading required package: data.table</code></pre>
 <pre><code>## Loading required package: laeken</code></pre>
-<pre><code>## Loading required package: boot</code></pre>
-<pre><code>## Loading required package: MASS</code></pre>
+<pre><code>## Warning: package 'laeken' was built under R version 3.5.2</code></pre>
 <pre><code>## Loading required package: stringr</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: pracma</code></pre>
 <p>I don’t expect this vignette to be help for most srvyr users, it is instead intended for other package developers. An exciting new feature that is easier now that I have reworked srvyr’s non-standard evaluation to match dplyr 0.7+ is that it is now possible for non-srvyr functions to be called from within <code>summarize</code>. This vignette describes some of the inner-workings of summarize so that others can extend srvyr. This is kind of a fiddly part of srvyr, and I don’t expect that many people will want or need to understand it, so this guide is mostly aimed at package authors who already have an understanding of how survey objects work. If you’d like more explanation, please let me know on <a href="https://github.com/gergness/srvyr">github</a>!</p>
 <div id="translating-from-survey-to-srvyr" class="section level2">
 <h2>Translating from survey to srvyr</h2>
