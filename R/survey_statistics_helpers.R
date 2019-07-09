@@ -242,7 +242,7 @@ factor_stat_reshape <- function(stat, peel, var_names, peel_levels) {
     stat_name <- names(stat)[iii]
     stat_df <- stat[[iii]]
     if (stat_name == "grps") {
-      stat_df <- dplyr::tbl_df(stat_df)
+      stat_df <- tibble::as_tibble(stat_df)
       stat_df[rep(seq_len(nrow(stat_df)), length(var_names)), ]
     } else if(stat_name == "ci") {
       out <- utils::stack(stat_df)
@@ -274,10 +274,13 @@ factor_stat_reshape <- function(stat, peel, var_names, peel_levels) {
 }
 
 stop_for_factor <- function(x) {
-  if (class(x) == "factor") {
+  if (is.factor(x)) {
     stop(paste0(
-      "Factor not allowed in survey functions, should be used as a grouping variable"
+      "Factor not allowed in survey functions, should be used as a grouping variable."
+    ), call. = FALSE)
+  } else if (is.character(x)) {
+    stop(paste0(
+      "Character vectors not allowed in survey functions, should be used as a grouping variable."
     ), call. = FALSE)
   }
-
 }

@@ -1,6 +1,6 @@
 ## ---- echo = FALSE-------------------------------------------------------
-if (!require(MonetDBLite)) {
-  message("Could not find MonetDBLite so could not run vignette.")
+if (!require(RSQLite)) {
+  message("Could not find RSQLite so could not run vignette.")
   knitr::opts_chunk$set(eval = FALSE)
 }
 
@@ -11,7 +11,6 @@ if (!file.exists("acs_m.Rdata")) {
 
 ## ------------------------------------------------------------------------
 suppressMessages({
-  library(MonetDBLite)
   library(survey)
   library(srvyr)
   library(dplyr)
@@ -26,11 +25,8 @@ suppressMessages({
 load("acs_m.Rdata") # acs_m data
 
 # Set up database and table
-db <- src_monetdblite()
+db <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
 acs_m_db <- copy_to(db, acs_m, "acs_m", temporary = FALSE)
-
-# Make table read only to reflect real world usage (see advanced topics below).
-db_status <- dbSendQuery(acs_m_db$src$con, "ALTER TABLE acs_m SET READ ONLY")
 
 # Or, if the data was already stored in the database, you could do this
 # acs_m_data <- tbl(db, sql("SELECT * FROM acs_m")) 
@@ -55,6 +51,7 @@ acs_m %>%
   group_by(sex) %>%
   summarize(hicov = mean(hicov == 1))
 
+# Works in RSQlite, but didn't in the now defunct MonetDB
 # acs_m_db %>% 
 #   group_by(sex) %>%
 #   summarize(hicov = mean(hicov == 1))

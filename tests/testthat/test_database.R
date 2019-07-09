@@ -8,12 +8,14 @@ suppressPackageStartupMessages({
 source("utilities.R")
 
 if (suppressPackageStartupMessages(require(dbplyr))) {
-  has_rsqlite <- suppressPackageStartupMessages(require(RSQLite))
-  has_monetdb <- suppressPackageStartupMessages(require(MonetDBLite))
+  has_rsqlite <- suppressWarnings(suppressPackageStartupMessages(require(RSQLite)))
+  # MonetDBLite no longer on CRAN leaving in code in case we ever want to
+  # replace its successor
+  #  has_monetdb <- suppressWarnings(suppressPackageStartupMessages(require(MonetDBLite)))
   data(api)
 
-  dbs_to_run <- c("RSQLite", "MonetDBLite")
-
+  # dbs_to_run <- c("RSQLite", "MonetDBLite")
+  dbs_to_run <- "RSQLite"
   for (db in dbs_to_run) {
     if (db == "RSQLite" && has_rsqlite) {
       con <- DBI::dbConnect(RSQLite::SQLite(), path = ":memory:")
@@ -23,15 +25,15 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
       db_avail <- TRUE
     } else if (db == "RSQLite" && !has_rsqlite){
       db_avail <- FALSE
-    } else if (db == "MonetDBLite" && has_monetdb) {
-      con <- DBI::dbConnect(MonetDBLite::MonetDBLite(), path = ":memory:")
-      cleaned <- dplyr::select(apistrat, -full)
-      names(cleaned) <- gsub("\\.", "", names(cleaned))
-      apistrat_db <- copy_to(con, cleaned)
-      db_avail <- TRUE
-    } else if (db == "MonetDBLite" && !has_monetdb) {
-      db_avail <- FALSE
-    }
+    } #else if (db == "MonetDBLite" && has_monetdb) {
+    #   con <- DBI::dbConnect(MonetDBLite::MonetDBLite(), path = ":memory:")
+    #   cleaned <- dplyr::select(apistrat, -full)
+    #   names(cleaned) <- gsub("\\.", "", names(cleaned))
+    #   apistrat_db <- copy_to(con, cleaned)
+    #   db_avail <- TRUE
+    # } else if (db == "MonetDBLite" && !has_monetdb) {
+    #   db_avail <- FALSE
+    # }
 
     test_that(paste0("DB backed survey tests - ", db), {
       skip_if_not(db_avail)
@@ -148,7 +150,7 @@ if (suppressPackageStartupMessages(require(dbplyr))) {
 
 }
 
-db_avail <- (suppressPackageStartupMessages(require(RSQLite)))
+db_avail <- suppressWarnings(suppressPackageStartupMessages(require(RSQLite)))
 test_that("Can convert from survey DB-backed surveys to srvyr ones", {
   skip_if_not(db_avail)
   dbclus1<-svydesign(id=~dnum, weights=~pw, fpc=~fpc,

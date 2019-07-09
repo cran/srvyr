@@ -1,3 +1,19 @@
+# srvyr 0.3.5
+* New functions survey_var and survey_sd to calculate population variance and
+  standard deviaton.
+
+* Computation of standard errors in all survey_ functions can be suppressed
+  by setting vartype=NULL (#45, thanks @tzoltak).
+
+* Fixed an issue where you'd get an error when summarize components returned 
+  different lengths of data - usually when factor levels were not present
+  in the data (#49).
+  
+* Removed references to MonetDBLite since it has been removed from CRAN.
+
+* Small updates to replace soft-deprecated dplyr functions with their tibble
+  and tidyselect equivalents (#52, thanks @bschneidr).
+
 # srvyr 0.3.4
 * survey_mean/survey_total allow `deff="replace"` like their survey package
   forbearers. (#46, thanks @mandes95)
