@@ -71,7 +71,7 @@ localize_lazy_svy <- function(svy, dots = NULL) {
 find_vars_to_collect_in_dots <- function(data, dots) {
   # All dots must be a function for srvyr summarize, so we can
   # go down to each dot's expression arguments
-  all_args <- lapply(dots, function(x) rlang::lang_args(x))
+  all_args <- lapply(dots, function(x) rlang::call_args(x))
   all_args <- rlang::squash(unname(all_args))
 
   used_vars <- lapply(all_args, find_vars_to_collect, var_names = dplyr::tbl_vars(data))
@@ -86,7 +86,7 @@ find_vars_to_collect <- function(var_names, expr) {
 
 #' Force computation of a database query
 #'
-#' \code{collect} retreives data from a database query (and when run
+#' \code{collect} retrieves data from a database query (and when run
 #' on a tbl_svy object adjusts weights accordingly). Use collect when
 #' you want to run a function from the survey package on a srvyr db
 #' backed object. \code{compute} stores results in a remote temporary
