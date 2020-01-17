@@ -1,4 +1,4 @@
-## ----setup, echo = FALSE-------------------------------------------------
+## ----setup, echo = FALSE------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -9,7 +9,7 @@ if (!require(convey) | !require(vardpoor)) {
   message("Missing convey and vardpoor packages. Install them to run vignette.")
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # S3 generic function
 survey_gini <- function(
   x, na.rm = FALSE, vartype = c("se", "ci", "var", "cv"), .svy = current_svy(), ...
@@ -17,7 +17,7 @@ survey_gini <- function(
   UseMethod("survey_gini", .svy)
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 survey_gini.tbl_svy <- function(
   x, na.rm = FALSE, vartype = c("se", "ci", "var", "cv"), .svy = current_svy(), ...
 ) {
@@ -30,7 +30,7 @@ survey_gini.tbl_svy <- function(
   out
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 survey_gini.grouped_svy <- function(
   x, na.rm = FALSE, vartype = c("se", "ci", "var", "cv"), .svy = current_svy(), ...
 ) {
@@ -46,7 +46,7 @@ survey_gini.grouped_svy <- function(
   out
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Example from ?convey::svygini
 suppressPackageStartupMessages({
   library(srvyr)

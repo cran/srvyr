@@ -1,4 +1,4 @@
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE------------------------------------------------------------
 if (!require(RSQLite)) {
   message("Could not find RSQLite so could not run vignette.")
   knitr::opts_chunk$set(eval = FALSE)
@@ -9,7 +9,7 @@ if (!file.exists("acs_m.Rdata")) {
   knitr::opts_chunk$set(eval = FALSE)
 }
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 suppressMessages({
   library(survey)
   library(srvyr)
@@ -31,7 +31,7 @@ acs_m_db <- copy_to(db, acs_m, "acs_m", temporary = FALSE)
 # Or, if the data was already stored in the database, you could do this
 # acs_m_data <- tbl(db, sql("SELECT * FROM acs_m")) 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Same results
 acs_m %>% 
   group_by(sex) %>%
@@ -46,7 +46,7 @@ object.size(acs_m)
 object.size(acs_m_db)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 acs_m %>% 
   group_by(sex) %>%
   summarize(hicov = mean(hicov == 1))
@@ -66,7 +66,7 @@ acs_m_db %>%
   mutate(hicov = ifelse(hicov == 1, 1L, 0L)) %>%
   summarize(hicov = mean(hicov))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 acs_m %>% 
   group_by(agecat = cut(agep, c(0, 19, 35, 50, 65, 200))) %>%
   summarize(hicov = mean(hicov == 1))
@@ -88,7 +88,7 @@ acs_m_db %>%
   group_by(agecat) %>% 
   summarize(hicov = mean(hicov))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 acs_m_db_svy <- acs_m_db %>% 
   as_survey_rep(
     weight = pwgtp,
@@ -102,10 +102,10 @@ acs_m_db_svy <- acs_m_db %>%
 
 acs_m_db_svy
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 object.size(acs_m_db_svy)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # You can calculate the population of the united states #
 # by state
 acs_m_db_svy %>%
@@ -171,7 +171,7 @@ acs_m_db_svy %>%
   group_by(agecat) %>% 
   summarize(pct = survey_mean(na.rm = TRUE))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 acs_m_db_svy %>%
   select(agep, hicov, sex) %>%
   collect() %>%
