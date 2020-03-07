@@ -256,10 +256,11 @@ out_survey <- temp_survey %>%
          survey_ratio_upp = ci_u, survey_ratio_deff = `DEff`) %>%
   select(-se.api99.api00)
 
-out_survey[, c("survey_ratio_low", "survey_ratio_upp")] <-
-  confint(temp_survey, df = df_test)
+sv_ci <- confint(temp_survey, df = df_test)
+out_survey$survey_ratio_low <- unname(sv_ci[, 1])
+out_survey$survey_ratio_upp <- unname(sv_ci[, 2])
 
-test_that("deff and df work for grouped survey total",
+test_that("deff and df work for grouped survey ratio",
           expect_df_equal(out_srvyr, out_survey))
 
 out_survey <- svyquantile(~api99, dstrata, c(0.5), ci = TRUE, df = df_test)
@@ -651,6 +652,40 @@ test_that(
     expect_equal(test$n, c(23, 160))
   }
 )
+
+test_that(
+  "unweighted works evaluates in correct environment", {
+    data(api, package = "survey")
+    dclus1 <- as_survey_design(apiclus1, id = dnum, weights = pw, fpc = fpc)
+
+    wrong_wrapper <- function(x) {
+      unweighted(length(x))
+    }
+
+    expect_error(
+      test <- dclus1 %>%
+        group_by(sch.wide) %>%
+        summarize(n = wrong_wrapper(api99))
+    )
+
+    right_wrapper <- function(x) {
+      x <- rlang::enquo(x)
+      unweighted(length(!!x))
+    }
+
+    test1 <- dclus1 %>%
+      group_by(sch.wide) %>%
+      summarize(n = right_wrapper(api99))
+
+    test2 <- dclus1 %>%
+      group_by(sch.wide) %>%
+      summarize(n = unweighted(length(api99)))
+
+
+    expect_equal(test1, test2)
+  }
+)
+
 
 test_that(
   "Can groupby before or after a filter (#59)", {

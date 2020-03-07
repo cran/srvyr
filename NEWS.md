@@ -1,3 +1,11 @@
+# srvyr 0.3.8
+* `unweighted` now evaluates in the right context and so will provide correct error
+  when an incorrectly interpolated function is used (#70, thanks for reporting @tlmcmurry)
+  
+* `filter_at` works now, (#57, thanks for reporting @dcaseykc & helping @bschneidr).
+
+* Fix for upcoming version of tibble (#72).
+
 # srvyr 0.3.7
 * `filter`ing on grouped survey designs now works correctly (#54, thanks for reporting @dcaseykc)
 
