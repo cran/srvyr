@@ -1,3 +1,6 @@
+# srvyr 0.3.9
+* Fix for upcoming version of dplyr (thanks @romainfrancois)
+
 # srvyr 0.3.8
 * `unweighted` now evaluates in the right context and so will provide correct error
   when an incorrectly interpolated function is used (#70, thanks for reporting @tlmcmurry)

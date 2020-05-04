@@ -111,7 +111,7 @@ get_var_est <- function(
   out <- c(list(coef), out)
 
   if (!identical(grps, "")) {
-    out <- c(list(stat[grps]), out)
+    out <- c(list(as.data.frame(stat[grps], stringsAsFactors = FALSE)), out)
   }
 
   if (!isFALSE(deff)) {
@@ -161,10 +161,11 @@ get_var_est_quantile <- function(stat, vartype, q, grps = "", level = 0.95, df =
 
   coef <- data.frame(matrix(coef(stat), ncol = out_width))
   names(coef) <- qnames
+  out <- lapply(out, as.data.frame)
   out <- c(list(coef), out)
 
   if (!identical(grps, "")) {
-    out <- c(list(stat[grps]), out)
+    out <- c(list(as.data.frame(stat[grps])), out)
   }
 
   dplyr::bind_cols(out)
