@@ -4,9 +4,15 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-if (!require(convey) | !require(vardpoor)) {
+if (!require(convey) | !require(laeken)) {
   knitr::opts_chunk$set(eval = FALSE)
-  message("Missing convey and vardpoor packages. Install them to run vignette.")
+  message("Missing convey and laeken packages. Install them to run vignette.")
+}
+
+data("eusilc", package = "laeken")
+if (!exists("eusilc")) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("Did not find 'eusilc' data in laeken package, cannot continue.")
 }
 
 ## -----------------------------------------------------------------------------
@@ -52,7 +58,7 @@ suppressPackageStartupMessages({
   library(srvyr)
   library(survey)
   library(convey)
-  library(vardpoor)
+  library(laeken)
 })
 data(eusilc) ; names( eusilc ) <- tolower( names( eusilc ) )
 

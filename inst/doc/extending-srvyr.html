@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2020-05-03" />
+<meta name="date" content="2020-05-25" />
 
 <title>Extending srvyr</title>
 
@@ -315,12 +315,11 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Extending srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2020-05-03</h4>
+<h4 class="date">2020-05-25</h4>
 
 
 
 <pre><code>## Loading required package: convey</code></pre>
-<pre><code>## Loading required package: vardpoor</code></pre>
 <pre><code>## Loading required package: laeken</code></pre>
 <p>I don’t expect this vignette to be help for most srvyr users, it is instead intended for other package developers. An exciting new feature that is easier now that I have reworked srvyr’s non-standard evaluation to match dplyr 0.7+ is that it is now possible for non-srvyr functions to be called from within <code>summarize</code>. This vignette describes some of the inner-workings of summarize so that others can extend srvyr. This is kind of a fiddly part of srvyr, and I don’t expect that many people will want or need to understand it, so this guide is mostly aimed at package authors who already have an understanding of how survey objects work. If you’d like more explanation, please let me know on <a href="https://github.com/gergness/srvyr">github</a>!</p>
 <div id="translating-from-survey-to-srvyr" class="section level2">
@@ -361,112 +360,108 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h2>Example: convey::svygini -&gt; survey_gini</h2>
 <p>That was just a lot of text, but I think it’s probably easiest just to provide an example. The convey package provides several methods for analysis of inequality using survey data. The svygini function calculates the gini coefficient. Here, we’ll write functions that make a srvyr version <code>survey_gini</code>.</p>
 <p>To distinguish between ungrouped and grouped survey objects, we’ll make a generic. Also note the use of <code>.svy = current_svy()</code> to get the survey object from the current summarize context.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># S3 generic function</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a>survey_gini &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
-<span id="cb4-3"><a href="#cb4-3"></a>  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...</span>
-<span id="cb4-4"><a href="#cb4-4"></a>) {</span>
-<span id="cb4-5"><a href="#cb4-5"></a>  <span class="kw">UseMethod</span>(<span class="st">&quot;survey_gini&quot;</span>, .svy)</span>
-<span id="cb4-6"><a href="#cb4-6"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># S3 generic function</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>survey_gini &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<span id="cb3-3"><a href="#cb3-3"></a>  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...</span>
+<span id="cb3-4"><a href="#cb3-4"></a>) {</span>
+<span id="cb3-5"><a href="#cb3-5"></a>  <span class="kw">UseMethod</span>(<span class="st">&quot;survey_gini&quot;</span>, .svy)</span>
+<span id="cb3-6"><a href="#cb3-6"></a>}</span></code></pre></div>
 <p>And here’s the ungrouped version, which uses <code>set_survey_vars()</code>, <code>convey::svygini()</code> and <code>get_var_est()</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>survey_gini.tbl_svy &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>survey_gini.tbl_svy &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
+<span id="cb4-2"><a href="#cb4-2"></a>  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...</span>
+<span id="cb4-3"><a href="#cb4-3"></a>) {</span>
+<span id="cb4-4"><a href="#cb4-4"></a>  <span class="cf">if</span> (<span class="kw">missing</span>(vartype)) vartype &lt;-<span class="st"> &quot;se&quot;</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>  vartype &lt;-<span class="st"> </span><span class="kw">match.arg</span>(vartype, <span class="dt">several.ok =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb4-6"><a href="#cb4-6"></a>  .svy &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">set_survey_vars</span>(.svy, x)</span>
+<span id="cb4-7"><a href="#cb4-7"></a>  </span>
+<span id="cb4-8"><a href="#cb4-8"></a>  out &lt;-<span class="st"> </span>convey<span class="op">::</span><span class="kw">svygini</span>(<span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy)</span>
+<span id="cb4-9"><a href="#cb4-9"></a>  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype)</span>
+<span id="cb4-10"><a href="#cb4-10"></a>  out</span>
+<span id="cb4-11"><a href="#cb4-11"></a>}</span></code></pre></div>
+<p>Finally, the grouped version which uses the above functions plus <code>survey::svyby()</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>survey_gini.grouped_svy &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
 <span id="cb5-2"><a href="#cb5-2"></a>  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...</span>
 <span id="cb5-3"><a href="#cb5-3"></a>) {</span>
 <span id="cb5-4"><a href="#cb5-4"></a>  <span class="cf">if</span> (<span class="kw">missing</span>(vartype)) vartype &lt;-<span class="st"> &quot;se&quot;</span></span>
 <span id="cb5-5"><a href="#cb5-5"></a>  vartype &lt;-<span class="st"> </span><span class="kw">match.arg</span>(vartype, <span class="dt">several.ok =</span> <span class="ot">TRUE</span>)</span>
 <span id="cb5-6"><a href="#cb5-6"></a>  .svy &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">set_survey_vars</span>(.svy, x)</span>
-<span id="cb5-7"><a href="#cb5-7"></a>  </span>
-<span id="cb5-8"><a href="#cb5-8"></a>  out &lt;-<span class="st"> </span>convey<span class="op">::</span><span class="kw">svygini</span>(<span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy)</span>
-<span id="cb5-9"><a href="#cb5-9"></a>  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype)</span>
-<span id="cb5-10"><a href="#cb5-10"></a>  out</span>
-<span id="cb5-11"><a href="#cb5-11"></a>}</span></code></pre></div>
-<p>Finally, the grouped version which uses the above functions plus <code>survey::svyby()</code>.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>survey_gini.grouped_svy &lt;-<span class="st"> </span><span class="cf">function</span>(</span>
-<span id="cb6-2"><a href="#cb6-2"></a>  x, <span class="dt">na.rm =</span> <span class="ot">FALSE</span>, <span class="dt">vartype =</span> <span class="kw">c</span>(<span class="st">&quot;se&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;var&quot;</span>, <span class="st">&quot;cv&quot;</span>), <span class="dt">.svy =</span> <span class="kw">current_svy</span>(), ...</span>
-<span id="cb6-3"><a href="#cb6-3"></a>) {</span>
-<span id="cb6-4"><a href="#cb6-4"></a>  <span class="cf">if</span> (<span class="kw">missing</span>(vartype)) vartype &lt;-<span class="st"> &quot;se&quot;</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a>  vartype &lt;-<span class="st"> </span><span class="kw">match.arg</span>(vartype, <span class="dt">several.ok =</span> <span class="ot">TRUE</span>)</span>
-<span id="cb6-6"><a href="#cb6-6"></a>  .svy &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">set_survey_vars</span>(.svy, x)</span>
-<span id="cb6-7"><a href="#cb6-7"></a>  grps_formula &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">make.formula</span>(<span class="kw">group_vars</span>(.svy))</span>
-<span id="cb6-8"><a href="#cb6-8"></a>  </span>
-<span id="cb6-9"><a href="#cb6-9"></a>  out &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">svyby</span>(</span>
-<span id="cb6-10"><a href="#cb6-10"></a>    <span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, grps_formula, convey<span class="op">::</span>svygini, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy</span>
-<span id="cb6-11"><a href="#cb6-11"></a>  )</span>
-<span id="cb6-12"><a href="#cb6-12"></a>  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype, <span class="dt">grps =</span> <span class="kw">group_vars</span>(.svy))</span>
-<span id="cb6-13"><a href="#cb6-13"></a>  out</span>
-<span id="cb6-14"><a href="#cb6-14"></a>}</span></code></pre></div>
+<span id="cb5-7"><a href="#cb5-7"></a>  grps_formula &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">make.formula</span>(<span class="kw">group_vars</span>(.svy))</span>
+<span id="cb5-8"><a href="#cb5-8"></a>  </span>
+<span id="cb5-9"><a href="#cb5-9"></a>  out &lt;-<span class="st"> </span>survey<span class="op">::</span><span class="kw">svyby</span>(</span>
+<span id="cb5-10"><a href="#cb5-10"></a>    <span class="op">~</span><span class="st">`</span><span class="dt">__SRVYR_TEMP_VAR__</span><span class="st">`</span>, grps_formula, convey<span class="op">::</span>svygini, <span class="dt">na.rm =</span> na.rm, <span class="dt">design =</span> .svy</span>
+<span id="cb5-11"><a href="#cb5-11"></a>  )</span>
+<span id="cb5-12"><a href="#cb5-12"></a>  out &lt;-<span class="st"> </span>srvyr<span class="op">::</span><span class="kw">get_var_est</span>(out, vartype, <span class="dt">grps =</span> <span class="kw">group_vars</span>(.svy))</span>
+<span id="cb5-13"><a href="#cb5-13"></a>  out</span>
+<span id="cb5-14"><a href="#cb5-14"></a>}</span></code></pre></div>
 <p>And here’s what these functions look like in practice:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># Example from ?convey::svygini</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">suppressPackageStartupMessages</span>({</span>
-<span id="cb7-3"><a href="#cb7-3"></a>  <span class="kw">library</span>(srvyr)</span>
-<span id="cb7-4"><a href="#cb7-4"></a>  <span class="kw">library</span>(survey)</span>
-<span id="cb7-5"><a href="#cb7-5"></a>  <span class="kw">library</span>(convey)</span>
-<span id="cb7-6"><a href="#cb7-6"></a>  <span class="kw">library</span>(vardpoor)</span>
-<span id="cb7-7"><a href="#cb7-7"></a>})</span>
-<span id="cb7-8"><a href="#cb7-8"></a><span class="kw">data</span>(eusilc) ; <span class="kw">names</span>( eusilc ) &lt;-<span class="st"> </span><span class="kw">tolower</span>( <span class="kw">names</span>( eusilc ) )</span>
-<span id="cb7-9"><a href="#cb7-9"></a></span>
-<span id="cb7-10"><a href="#cb7-10"></a><span class="co"># Setup for survey package</span></span>
-<span id="cb7-11"><a href="#cb7-11"></a>des_eusilc &lt;-<span class="st"> </span><span class="kw">svydesign</span>(</span>
-<span id="cb7-12"><a href="#cb7-12"></a>  <span class="dt">ids =</span> <span class="op">~</span>rb030, </span>
-<span id="cb7-13"><a href="#cb7-13"></a>  <span class="dt">strata =</span> <span class="op">~</span>db040,  </span>
-<span id="cb7-14"><a href="#cb7-14"></a>  <span class="dt">weights =</span> <span class="op">~</span>rb050, </span>
-<span id="cb7-15"><a href="#cb7-15"></a>  <span class="dt">data =</span> eusilc</span>
-<span id="cb7-16"><a href="#cb7-16"></a>)</span>
-<span id="cb7-17"><a href="#cb7-17"></a>des_eusilc &lt;-<span class="st"> </span><span class="kw">convey_prep</span>(des_eusilc)</span>
-<span id="cb7-18"><a href="#cb7-18"></a></span>
-<span id="cb7-19"><a href="#cb7-19"></a><span class="co"># Setup for srvyr package</span></span>
-<span id="cb7-20"><a href="#cb7-20"></a>srvyr_eusilc &lt;-<span class="st"> </span>eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb7-21"><a href="#cb7-21"></a><span class="st">  </span><span class="kw">as_survey</span>(</span>
-<span id="cb7-22"><a href="#cb7-22"></a>    <span class="dt">ids =</span> rb030,</span>
-<span id="cb7-23"><a href="#cb7-23"></a>    <span class="dt">strata =</span> db040,</span>
-<span id="cb7-24"><a href="#cb7-24"></a>    <span class="dt">weights =</span> rb050</span>
-<span id="cb7-25"><a href="#cb7-25"></a>  ) <span class="op">%&gt;%</span></span>
-<span id="cb7-26"><a href="#cb7-26"></a><span class="st">  </span><span class="kw">convey_prep</span>()</span>
-<span id="cb7-27"><a href="#cb7-27"></a></span>
-<span id="cb7-28"><a href="#cb7-28"></a><span class="co">## Ungrouped</span></span>
-<span id="cb7-29"><a href="#cb7-29"></a><span class="co"># Calculate ungrouped for survey package</span></span>
-<span id="cb7-30"><a href="#cb7-30"></a><span class="kw">svygini</span>(<span class="op">~</span>eqincome, <span class="dt">design =</span> des_eusilc)</span>
-<span id="cb7-31"><a href="#cb7-31"></a><span class="co">#&gt;             gini     SE</span></span>
-<span id="cb7-32"><a href="#cb7-32"></a><span class="co">#&gt; eqincome 0.26497 0.0019</span></span>
-<span id="cb7-33"><a href="#cb7-33"></a></span>
-<span id="cb7-34"><a href="#cb7-34"></a><span class="co"># With our new function</span></span>
-<span id="cb7-35"><a href="#cb7-35"></a><span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> srvyr_eusilc)</span>
-<span id="cb7-36"><a href="#cb7-36"></a><span class="co">#&gt;   __SRVYR_COEF__         _se</span></span>
-<span id="cb7-37"><a href="#cb7-37"></a><span class="co">#&gt; 1      0.2649652 0.001946982</span></span>
-<span id="cb7-38"><a href="#cb7-38"></a></span>
-<span id="cb7-39"><a href="#cb7-39"></a><span class="co"># And finally, the more typical way through summarize</span></span>
-<span id="cb7-40"><a href="#cb7-40"></a>srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb7-41"><a href="#cb7-41"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))</span>
-<span id="cb7-42"><a href="#cb7-42"></a><span class="co">#&gt; # A tibble: 1 x 2</span></span>
-<span id="cb7-43"><a href="#cb7-43"></a><span class="co">#&gt;   eqincome eqincome_se</span></span>
-<span id="cb7-44"><a href="#cb7-44"></a><span class="co">#&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb7-45"><a href="#cb7-45"></a><span class="co">#&gt; 1    0.265     0.00195</span></span>
-<span id="cb7-46"><a href="#cb7-46"></a></span>
-<span id="cb7-47"><a href="#cb7-47"></a><span class="co">## Groups</span></span>
-<span id="cb7-48"><a href="#cb7-48"></a><span class="co"># Calculate by groups for survey</span></span>
-<span id="cb7-49"><a href="#cb7-49"></a>survey<span class="op">::</span><span class="kw">svyby</span>(<span class="op">~</span>eqincome, <span class="op">~</span>rb090, des_eusilc, convey<span class="op">::</span>svygini)</span>
-<span id="cb7-50"><a href="#cb7-50"></a><span class="co">#&gt;         rb090  eqincome          se</span></span>
-<span id="cb7-51"><a href="#cb7-51"></a><span class="co">#&gt; male     male 0.2578983 0.002617279</span></span>
-<span id="cb7-52"><a href="#cb7-52"></a><span class="co">#&gt; female female 0.2702080 0.002892713</span></span>
-<span id="cb7-53"><a href="#cb7-53"></a></span>
-<span id="cb7-54"><a href="#cb7-54"></a><span class="co"># With our new function</span></span>
-<span id="cb7-55"><a href="#cb7-55"></a><span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> <span class="kw">group_by</span>(srvyr_eusilc, rb090))</span>
-<span id="cb7-56"><a href="#cb7-56"></a><span class="co">#&gt; Warning: The `add` argument of `group_by()` is deprecated as of dplyr 1.0.0.</span></span>
-<span id="cb7-57"><a href="#cb7-57"></a><span class="co">#&gt; Please use the `.add` argument instead.</span></span>
-<span id="cb7-58"><a href="#cb7-58"></a><span class="co">#&gt; This warning is displayed once every 8 hours.</span></span>
-<span id="cb7-59"><a href="#cb7-59"></a><span class="co">#&gt; Call `lifecycle::last_warnings()` to see where this warning was generated.</span></span>
-<span id="cb7-60"><a href="#cb7-60"></a><span class="co">#&gt;         rb090 __SRVYR_COEF__         _se</span></span>
-<span id="cb7-61"><a href="#cb7-61"></a><span class="co">#&gt; male     male      0.2578983 0.002617279</span></span>
-<span id="cb7-62"><a href="#cb7-62"></a><span class="co">#&gt; female female      0.2702080 0.002892713</span></span>
-<span id="cb7-63"><a href="#cb7-63"></a></span>
-<span id="cb7-64"><a href="#cb7-64"></a><span class="co"># And finally, the more typical way through summarize</span></span>
-<span id="cb7-65"><a href="#cb7-65"></a>srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb7-66"><a href="#cb7-66"></a><span class="st">  </span><span class="kw">group_by</span>(rb090) <span class="op">%&gt;%</span></span>
-<span id="cb7-67"><a href="#cb7-67"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))</span>
-<span id="cb7-68"><a href="#cb7-68"></a><span class="co">#&gt; # A tibble: 2 x 3</span></span>
-<span id="cb7-69"><a href="#cb7-69"></a><span class="co">#&gt;   rb090  eqincome eqincome_se</span></span>
-<span id="cb7-70"><a href="#cb7-70"></a><span class="co">#&gt;   &lt;fct&gt;     &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb7-71"><a href="#cb7-71"></a><span class="co">#&gt; 1 male      0.258     0.00262</span></span>
-<span id="cb7-72"><a href="#cb7-72"></a><span class="co">#&gt; 2 female    0.270     0.00289</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Example from ?convey::svygini</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">suppressPackageStartupMessages</span>({</span>
+<span id="cb6-3"><a href="#cb6-3"></a>  <span class="kw">library</span>(srvyr)</span>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="kw">library</span>(survey)</span>
+<span id="cb6-5"><a href="#cb6-5"></a>  <span class="kw">library</span>(convey)</span>
+<span id="cb6-6"><a href="#cb6-6"></a>  <span class="kw">library</span>(laeken)</span>
+<span id="cb6-7"><a href="#cb6-7"></a>})</span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="kw">data</span>(eusilc) ; <span class="kw">names</span>( eusilc ) &lt;-<span class="st"> </span><span class="kw">tolower</span>( <span class="kw">names</span>( eusilc ) )</span>
+<span id="cb6-9"><a href="#cb6-9"></a></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co"># Setup for survey package</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>des_eusilc &lt;-<span class="st"> </span><span class="kw">svydesign</span>(</span>
+<span id="cb6-12"><a href="#cb6-12"></a>  <span class="dt">ids =</span> <span class="op">~</span>rb030, </span>
+<span id="cb6-13"><a href="#cb6-13"></a>  <span class="dt">strata =</span> <span class="op">~</span>db040,  </span>
+<span id="cb6-14"><a href="#cb6-14"></a>  <span class="dt">weights =</span> <span class="op">~</span>rb050, </span>
+<span id="cb6-15"><a href="#cb6-15"></a>  <span class="dt">data =</span> eusilc</span>
+<span id="cb6-16"><a href="#cb6-16"></a>)</span>
+<span id="cb6-17"><a href="#cb6-17"></a>des_eusilc &lt;-<span class="st"> </span><span class="kw">convey_prep</span>(des_eusilc)</span>
+<span id="cb6-18"><a href="#cb6-18"></a></span>
+<span id="cb6-19"><a href="#cb6-19"></a><span class="co"># Setup for srvyr package</span></span>
+<span id="cb6-20"><a href="#cb6-20"></a>srvyr_eusilc &lt;-<span class="st"> </span>eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="st">  </span><span class="kw">as_survey</span>(</span>
+<span id="cb6-22"><a href="#cb6-22"></a>    <span class="dt">ids =</span> rb030,</span>
+<span id="cb6-23"><a href="#cb6-23"></a>    <span class="dt">strata =</span> db040,</span>
+<span id="cb6-24"><a href="#cb6-24"></a>    <span class="dt">weights =</span> rb050</span>
+<span id="cb6-25"><a href="#cb6-25"></a>  ) <span class="op">%&gt;%</span></span>
+<span id="cb6-26"><a href="#cb6-26"></a><span class="st">  </span><span class="kw">convey_prep</span>()</span>
+<span id="cb6-27"><a href="#cb6-27"></a></span>
+<span id="cb6-28"><a href="#cb6-28"></a><span class="co">## Ungrouped</span></span>
+<span id="cb6-29"><a href="#cb6-29"></a><span class="co"># Calculate ungrouped for survey package</span></span>
+<span id="cb6-30"><a href="#cb6-30"></a><span class="kw">svygini</span>(<span class="op">~</span>eqincome, <span class="dt">design =</span> des_eusilc)</span>
+<span id="cb6-31"><a href="#cb6-31"></a><span class="co">#&gt;             gini     SE</span></span>
+<span id="cb6-32"><a href="#cb6-32"></a><span class="co">#&gt; eqincome 0.26497 0.0019</span></span>
+<span id="cb6-33"><a href="#cb6-33"></a></span>
+<span id="cb6-34"><a href="#cb6-34"></a><span class="co"># With our new function</span></span>
+<span id="cb6-35"><a href="#cb6-35"></a><span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> srvyr_eusilc)</span>
+<span id="cb6-36"><a href="#cb6-36"></a><span class="co">#&gt;   __SRVYR_COEF__         _se</span></span>
+<span id="cb6-37"><a href="#cb6-37"></a><span class="co">#&gt; 1      0.2649652 0.001946982</span></span>
+<span id="cb6-38"><a href="#cb6-38"></a></span>
+<span id="cb6-39"><a href="#cb6-39"></a><span class="co"># And finally, the more typical way through summarize</span></span>
+<span id="cb6-40"><a href="#cb6-40"></a>srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb6-41"><a href="#cb6-41"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))</span>
+<span id="cb6-42"><a href="#cb6-42"></a><span class="co">#&gt; # A tibble: 1 x 2</span></span>
+<span id="cb6-43"><a href="#cb6-43"></a><span class="co">#&gt;   eqincome eqincome_se</span></span>
+<span id="cb6-44"><a href="#cb6-44"></a><span class="co">#&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb6-45"><a href="#cb6-45"></a><span class="co">#&gt; 1    0.265     0.00195</span></span>
+<span id="cb6-46"><a href="#cb6-46"></a></span>
+<span id="cb6-47"><a href="#cb6-47"></a><span class="co">## Groups</span></span>
+<span id="cb6-48"><a href="#cb6-48"></a><span class="co"># Calculate by groups for survey</span></span>
+<span id="cb6-49"><a href="#cb6-49"></a>survey<span class="op">::</span><span class="kw">svyby</span>(<span class="op">~</span>eqincome, <span class="op">~</span>rb090, des_eusilc, convey<span class="op">::</span>svygini)</span>
+<span id="cb6-50"><a href="#cb6-50"></a><span class="co">#&gt;         rb090  eqincome          se</span></span>
+<span id="cb6-51"><a href="#cb6-51"></a><span class="co">#&gt; male     male 0.2578983 0.002617279</span></span>
+<span id="cb6-52"><a href="#cb6-52"></a><span class="co">#&gt; female female 0.2702080 0.002892713</span></span>
+<span id="cb6-53"><a href="#cb6-53"></a></span>
+<span id="cb6-54"><a href="#cb6-54"></a><span class="co"># With our new function</span></span>
+<span id="cb6-55"><a href="#cb6-55"></a><span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> <span class="kw">group_by</span>(srvyr_eusilc, rb090))</span>
+<span id="cb6-56"><a href="#cb6-56"></a><span class="co">#&gt;    rb090 __SRVYR_COEF__         _se</span></span>
+<span id="cb6-57"><a href="#cb6-57"></a><span class="co">#&gt; 1   male      0.2578983 0.002617279</span></span>
+<span id="cb6-58"><a href="#cb6-58"></a><span class="co">#&gt; 2 female      0.2702080 0.002892713</span></span>
+<span id="cb6-59"><a href="#cb6-59"></a></span>
+<span id="cb6-60"><a href="#cb6-60"></a><span class="co"># And finally, the more typical way through summarize</span></span>
+<span id="cb6-61"><a href="#cb6-61"></a>srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb6-62"><a href="#cb6-62"></a><span class="st">  </span><span class="kw">group_by</span>(rb090) <span class="op">%&gt;%</span></span>
+<span id="cb6-63"><a href="#cb6-63"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">eqincome =</span> <span class="kw">survey_gini</span>(eqincome))</span>
+<span id="cb6-64"><a href="#cb6-64"></a><span class="co">#&gt; # A tibble: 2 x 3</span></span>
+<span id="cb6-65"><a href="#cb6-65"></a><span class="co">#&gt;   rb090  eqincome eqincome_se</span></span>
+<span id="cb6-66"><a href="#cb6-66"></a><span class="co">#&gt;   &lt;fct&gt;     &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb6-67"><a href="#cb6-67"></a><span class="co">#&gt; 1 male      0.258     0.00262</span></span>
+<span id="cb6-68"><a href="#cb6-68"></a><span class="co">#&gt; 2 female    0.270     0.00289</span></span></code></pre></div>
 </div>
 
 
