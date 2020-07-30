@@ -452,7 +452,14 @@ survey_quantile.tbl_svy <- function(
   stop_for_factor(x)
   .svy <- set_survey_vars(.svy, x)
 
-  stat <- survey::svyquantile(
+  # TODO: switch to improved svyquantile
+  if (utils::packageVersion("survey") >= "4.1") {
+    svyq_func <- get("oldsvyquantile", asNamespace("survey"))
+  } else {
+    svyq_func <- survey::svyquantile
+  }
+
+  stat <- svyq_func(
     ~`__SRVYR_TEMP_VAR__`, .svy, quantiles = quantiles, na.rm = na.rm,
     ci = TRUE, alpha = alpha, method = q_method, f = f,
     interval.type = interval_type, ties = ties, df = df
@@ -494,9 +501,17 @@ survey_quantile.grouped_svy <- function(
   stop_for_factor(x)
   .svy <- set_survey_vars(.svy, x)
 
+  # TODO: switch to improved svyquantile
+  if (utils::packageVersion("survey") >= "4.1") {
+    svyq_func <- get("oldsvyquantile", asNamespace("survey"))
+  } else {
+    svyq_func <- survey::svyquantile
+  }
+
+
   stat <- survey::svyby(
     formula = ~`__SRVYR_TEMP_VAR__`, survey::make.formula(grp_names), .svy,
-    survey::svyquantile, quantiles = quantiles, na.rm = na.rm,
+    svyq_func, quantiles = quantiles, na.rm = na.rm,
     ci = TRUE, alpha = alpha, method = q_method,
     f = f, interval.type = interval_type, ties = ties,
     df = df, vartype = vartype
@@ -722,7 +737,13 @@ unweighted <- function(x, .svy = current_svy(), ...) {
   # survey statistics
   dots <- rlang::quo_set_env(dots, rlang::env_parent(n = 2))
 
-  out <- summarize(.svy[["variables"]], !!dots)
+  if (is.calibrated(.svy) | is.pps(.svy)) {
+    excluded_rows <- is.infinite(.svy[['prob']])
+    out <- summarize(.svy[["variables"]][!excluded_rows,], !!dots)
+  } else {
+    out <- summarize(.svy[["variables"]], !!dots)
+  }
+
   names(out)[length(names(out))] <- ""
   out
 }
@@ -735,7 +756,22 @@ survey_stat_factor <- function(.svy, func, na.rm, vartype, level, deff, df) {
 
   if (is.numeric(.svy$variables[[peel_name]])) {
     warning("Coercing ", peel_name, " to character.", call. = FALSE)
-    .svy$variables[[peel_name]] <- as.character(.svy$variables[[peel_name]])
+    peel_var_coerced_to_char <- TRUE
+    peel_var_orig_type <- typeof(.svy$variables[[peel_name]])
+    .svy$variables[[peel_name]] <- format(.svy$variables[[peel_name]], nsmall = 20, digits = 22)
+  } else {
+    peel_var_coerced_to_char <- FALSE
+  }
+
+  # If any groups have NAs the survey package will drop them, so convert to
+  # explicit levels that will get dropped
+  for (grp_var_name in c(peel_name, grps_names)) {
+    if (any(is.na(.svy$variables[[grp_var_name]]))) {
+      if (is.factor(.svy$variables[[grp_var_name]])) {
+        levels(.svy$variables[[grp_var_name]]) <- c(levels(.svy$variables[[grp_var_name]]), "__SRVYR_NA_LEVEL__")
+      }
+      .svy$variables[[grp_var_name]][is.na(.svy$variables[[grp_var_name]])] <- "__SRVYR_NA_LEVEL__"
+    }
   }
 
   if (length(level) > 1) {
@@ -746,8 +782,10 @@ survey_stat_factor <- function(.svy, func, na.rm, vartype, level, deff, df) {
   peel_is_factor <- is.factor(.svy[["variables"]][[peel_name]])
   if (peel_is_factor) {
     peel_levels <- levels(.svy[["variables"]][[peel_name]])
+    peel_is_ordered <- is.ordered(.svy[["variables"]][[peel_name]])
   } else {
     peel_levels <- sort(unique(.svy[["variables"]][[peel_name]]))
+    peel_is_ordered <- FALSE
   }
   if (length(grps_names) > 0) {
     stat <- survey::svyby(survey::make.formula(peel_name),
@@ -760,18 +798,26 @@ survey_stat_factor <- function(.svy, func, na.rm, vartype, level, deff, df) {
 
     out <- get_var_est_factor(
       stat, vartype, grps = grps_names, peel = peel_name,
-      peel_is_factor = peel_is_factor, peel_levels = peel_levels,
+      peel_is_factor = peel_is_factor, peel_levels = peel_levels, peel_is_ordered = peel_is_ordered,
       level = level, df = df, deff = deff
     )
-
-    out
   } else {
     stat <- func(survey::make.formula(peel_name), .svy, na.rm = na.rm, deff = deff)
 
     out <- get_var_est_factor(
-      stat, vartype, grps = "", peel = peel_name, peel_levels = peel_levels,
+      stat, vartype, grps = "", peel = peel_name, peel_levels = peel_levels, peel_is_ordered = peel_is_ordered,
        peel_is_factor = peel_is_factor, df = df, deff = deff
     )
-    out
   }
+
+  # set back to NA the NAs that were forced to be explicit
+  for (grp_var_name in c(peel_name, grps_names)) {
+    out[[grp_var_name]][out[[grp_var_name]] == "__SRVYR_NA_LEVEL__"] <- NA
+  }
+
+  if (peel_var_coerced_to_char) {
+    out[[peel_name]] <- methods::as(out[[peel_name]], peel_var_orig_type)
+  }
+
+  out
 }

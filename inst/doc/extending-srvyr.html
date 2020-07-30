@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2020-05-25" />
+<meta name="date" content="2020-07-29" />
 
 <title>Extending srvyr</title>
 
@@ -26,6 +26,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
     if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
     a = h.attributes;
     while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
   }
 });
 </script>
@@ -315,7 +331,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Extending srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2020-05-25</h4>
+<h4 class="date">2020-07-29</h4>
 
 
 
@@ -449,9 +465,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb6-53"><a href="#cb6-53"></a></span>
 <span id="cb6-54"><a href="#cb6-54"></a><span class="co"># With our new function</span></span>
 <span id="cb6-55"><a href="#cb6-55"></a><span class="kw">survey_gini</span>(srvyr_eusilc<span class="op">$</span>variables<span class="op">$</span>eqincome, <span class="dt">.svy =</span> <span class="kw">group_by</span>(srvyr_eusilc, rb090))</span>
-<span id="cb6-56"><a href="#cb6-56"></a><span class="co">#&gt;    rb090 __SRVYR_COEF__         _se</span></span>
-<span id="cb6-57"><a href="#cb6-57"></a><span class="co">#&gt; 1   male      0.2578983 0.002617279</span></span>
-<span id="cb6-58"><a href="#cb6-58"></a><span class="co">#&gt; 2 female      0.2702080 0.002892713</span></span>
+<span id="cb6-56"><a href="#cb6-56"></a><span class="co">#&gt;         rb090 __SRVYR_COEF__         _se</span></span>
+<span id="cb6-57"><a href="#cb6-57"></a><span class="co">#&gt; male     male      0.2578983 0.002617279</span></span>
+<span id="cb6-58"><a href="#cb6-58"></a><span class="co">#&gt; female female      0.2702080 0.002892713</span></span>
 <span id="cb6-59"><a href="#cb6-59"></a></span>
 <span id="cb6-60"><a href="#cb6-60"></a><span class="co"># And finally, the more typical way through summarize</span></span>
 <span id="cb6-61"><a href="#cb6-61"></a>srvyr_eusilc <span class="op">%&gt;%</span><span class="st"> </span></span>

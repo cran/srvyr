@@ -13,7 +13,7 @@ out <- apistrat %>%
             n = n())
 
 ggplot(data = out, aes(x = stype, y = api_diff, group = hs_grad_pct, fill = hs_grad_pct)) +
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_col(stat = "identity", position = "dodge") +
   geom_text(aes(y = 0, label = n), position = position_dodge(width = 0.9), vjust = -1)
 
 ## ---- message = FALSE---------------------------------------------------------
@@ -103,7 +103,7 @@ out <- strat_design %>%
 
 ggplot(data = out, aes(x = stype, y = api_diff, group = hs_grad_pct, fill = hs_grad_pct,
                        ymax = api_diff_upp, ymin = api_diff_low)) +
-  geom_bar(stat = "identity", position = "dodge") +
+  geom_col(stat = "identity", position = "dodge") +
   geom_errorbar(position = position_dodge(width = 0.9), width = 0.1) +
   geom_text(aes(y = 0, label = n), position = position_dodge(width = 0.9), vjust = -1)
 

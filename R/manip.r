@@ -1,12 +1,25 @@
 #' @export
-mutate.tbl_svy <- function(.data, ...) {
+mutate.tbl_svy <- function(
+  .data,
+  ...,
+  .keep = c("all", "used", "unused", "none"),
+  .before = NULL,
+  .after = NULL
+) {
   dots <- rlang::quos(...)
 
   if (any(names2(dots) %in% as.character(survey_vars(.data)))) {
     stop("Cannot modify survey variable")
   }
 
-  .data$variables <- mutate(.data$variables, !!!dots)
+  .data$variables <- mutate(
+    .data$variables,
+    !!!dots,
+    .keep = .keep,
+    .before = {{.before}},
+    .after = {{.after}}
+  )
+
   .data
 }
 
@@ -14,6 +27,11 @@ mutate.tbl_svy <- function(.data, ...) {
 mutate_.tbl_svy <- function(.data, ..., .dots) {
   dots <- compat_lazy_dots(.dots, caller_env(), ...)
   mutate(.data, !!!dots)
+}
+
+#' @export
+transmute.tbl_svy <- function(.data, ...) {
+  mutate(.data, ..., .keep = "none")
 }
 
 #' @export
@@ -355,16 +373,9 @@ NULL
 NULL
 
 
-# pull method's arguments are changing in dplyr 1.
-
-
-pull.tbl_svy.new <- function(.data, var = -1, name = NULL) {
+#' @export
+pull.tbl_svy <- function(.data, var = -1, name = NULL, ...) {
   var <- rlang::enquo(var)
   name <- rlang::enquo(name)
   dplyr::pull(.data$variables, !!var, !!name)
-}
-
-pull.tbl_svy.old <- function(.data, var = -1) {
-  var <- rlang::enquo(var)
-  dplyr::pull(.data$variables, !!var)
 }
