@@ -56,6 +56,16 @@ rename.tbl_svy <- function(.data, ...) {
   .data
 }
 
+#' @method rename_with tbl_svy
+#' @importFrom tidyselect everything
+#' @export
+rename_with.tbl_svy <- function(.data, .fn, .cols = everything(), ...) {
+  dots <- rlang::quos(...)
+  .data$variables <- rename_with(.data$variables, .fn = .fn, .cols = .cols, !!!dots)
+
+  .data
+}
+
 #' @export
 rename_.tbl_svy <- function(.data, ..., .dots) {
   dots <- compat_lazy_dots(.dots, caller_env(), ...)
@@ -81,16 +91,48 @@ filter_.tbl_svy <- function(.data, ..., .dots) {
   }
 }
 
+#' @export
+drop_na.tbl_svy <- function(data, ...) {
+  vars <- tidyselect::eval_select(expr(c(...)), data$variables)
+  if (is_empty(vars)) {
+    f <- complete_cases(data$variables)
+  }
+  else {
+    f <- complete_cases(data$variables[vars])
+  }
+  filter(data, f)
+}
 
-# Import + export generics from dplyr
-#' Single table verbs from dplyr
+# from tidyr:::complete_cases
+complete_cases <- function (x, fun) {
+  ok <- vapply(x, is_complete, logical(nrow(x)))
+  if (is.vector(ok)) {
+    all(ok)
+  }
+  else {
+    rowSums(as.matrix(ok)) == ncol(x)
+  }
+}
+
+# from tidyr:::is_complete
+is_complete <- function (x) {
+  if (typeof(x) == "list") {
+    !vapply(x, rlang::is_empty, logical(1))
+  }
+  else {
+    !is.na(x)
+  }
+}
+
+# Import + export generics from dplyr and tidyr
+#' Single table verbs from dplyr and tidyr
 #'
 #' These are data manipulation functions designed to work on \code{tbl_svy} objects.
 #'
 #' \code{mutate} and \code{transmute} can add or modify variables. See
 #' \code{\link[dplyr]{mutate}} for more details.
 #'
-#' \code{select} and \code{rename} keep or rename variables. See
+#' \code{select}, \code{rename}, and \code{rename_with} keep or rename variables. See
 #' \code{\link[dplyr]{select}} for more details.
 #'
 #' \code{pull} extracts a variable as a vector (whereas \code{select} returns a \code{tbl_svy}).
@@ -98,6 +140,9 @@ filter_.tbl_svy <- function(.data, ..., .dots) {
 #'
 #' \code{filter} keeps certain observations. See \code{\link[dplyr]{filter}}
 #' for more details.
+#'
+#' #' \code{drop_na} drops observations containing missing values.
+#' See \code{\link[tidyr]{drop_na}} for more details.
 #'
 #' \code{arrange} is not implemented for \code{tbl_svy} objects. Nor are any
 #' two table verbs such as \code{bind_rows}, \code{bind_cols} or any of the
@@ -163,6 +208,12 @@ NULL
 #' @rdname srvyr-se-deprecated
 NULL
 
+#' @name rename_with
+#' @rdname dplyr_single
+#' @export
+#' @importFrom dplyr rename_with
+NULL
+
 #' @name filter
 #' @export
 #' @importFrom dplyr filter
@@ -173,6 +224,12 @@ NULL
 #' @export
 #' @importFrom dplyr filter_
 #' @rdname srvyr-se-deprecated
+NULL
+
+#' @name drop_na
+#' @export
+#' @importFrom tidyr drop_na
+#' @rdname dplyr_single
 NULL
 
 #' Manipulate multiple columns.

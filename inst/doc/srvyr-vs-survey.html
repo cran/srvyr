@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2020-07-29" />
+<meta name="date" content="2020-11-30" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -331,7 +331,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author">Greg Freedman</h4>
-<h4 class="date">2020-07-29</h4>
+<h4 class="date">2020-11-30</h4>
 
 
 
@@ -404,10 +404,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">api_diff =</span> <span class="kw">survey_mean</span>(api_diff, <span class="dt">vartype =</span> <span class="st">&quot;ci&quot;</span>))</span>
 <span id="cb7-4"><a href="#cb7-4"></a></span>
 <span id="cb7-5"><a href="#cb7-5"></a>out</span></code></pre></div>
-<pre><code>## # A tibble: 1 x 3
-##   api_diff api_diff_low api_diff_upp
-##      &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
-## 1     32.9         28.8         36.9</code></pre>
+<pre><code>##   api_diff api_diff_low api_diff_upp
+## 1 32.89252     28.84756     36.93747</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Using survey</span></span>
 <span id="cb9-2"><a href="#cb9-2"></a>out &lt;-<span class="st"> </span><span class="kw">svymean</span>(<span class="op">~</span>api_diff, strat_design_survey)</span>
 <span id="cb9-3"><a href="#cb9-3"></a></span>
@@ -538,7 +536,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="standard-evaluation" class="section level2">
 <h2>Standard evaluation</h2>
 <p>Srvyr now supports the standard evaluation conventions introduced in dplyr version 0.7 and rlang. If you’d like to use a function programmatically, you can use the functions from rlang like <code>rlang::quo()</code> or <code>rlang::sym()</code> to capture the expression and <code>rlang::!!</code> to unquote it. All of these functions are re-exported by srvyr, so you don’t need to load the rlang library to use them.</p>
-<p>Here’s a quick example, but please see the dplyr vignette <a href="http://dplyr.tidyverse.org/articles/programming.html"><code>vignette(&quot;programming&quot;, package = &quot;dplyr&quot;)</code></a> for more details.</p>
+<p>Here’s a quick example, but please see the dplyr vignette <a href="https://dplyr.tidyverse.org/articles/programming.html"><code>vignette(&quot;programming&quot;, package = &quot;dplyr&quot;)</code></a> for more details.</p>
 <div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a>fpc_var &lt;-<span class="st"> </span><span class="kw">sym</span>(<span class="st">&quot;fpc&quot;</span>)</span>
 <span id="cb31-2"><a href="#cb31-2"></a>srs_design_srvyr &lt;-<span class="st"> </span>apisrs <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">as_survey_design</span>(<span class="dt">fpc =</span> <span class="op">!!</span>fpc_var)</span>
 <span id="cb31-3"><a href="#cb31-3"></a></span>
@@ -565,10 +563,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a><span class="co"># Calculate survey mean for all variables that have names starting with &quot;api&quot;</span></span>
 <span id="cb33-2"><a href="#cb33-2"></a>strat_design <span class="op">%&gt;%</span></span>
 <span id="cb33-3"><a href="#cb33-3"></a><span class="st">  </span><span class="kw">summarize_at</span>(<span class="kw">vars</span>(<span class="kw">starts_with</span>(<span class="st">&quot;api&quot;</span>)), survey_mean)</span></code></pre></div>
-<pre><code>## # A tibble: 1 x 6
-##   api00 api00_se api99 api99_se api.stu api.stu_se
-##   &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;      &lt;dbl&gt;
-## 1  662.     9.41  629.     9.96    498.       16.1</code></pre>
+<pre><code>##      api00 api00_se    api99 api99_se  api.stu api.stu_se
+## 1 662.2874 9.408941 629.3948 9.963947 498.2255   16.06028</code></pre>
 <p>The dplyr documentation <code>dplyr::scoped</code> provides more details.</p>
 </div>
 </div>

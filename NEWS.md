@@ -1,4 +1,28 @@
-# srvyr (development version)
+# srvyr 1.0.0
+* `summarize` has been rearchitected, 
+  * main user facing improvements are:
+    * `dplyr::across()` now works within it
+    * dplyr functions like `dplyr::cur_group()`, `dplyr::cur_group_id()`, `dplyr::cur_data()`
+    work in it (as well as new anlagous functions srvyr-specific `cur_svy()` and 
+    `cur_svy_full()`)
+  * The only known breaking change is:
+    * objects in the `summarize` will refer to the output of `summarize` before the input.
+      Meaning code that looks like this:
+      ```r
+      dstrata %>% summarize(api99 = survey_mean(api99), api_diff = survey_mean(api00 - api99)) 
+      ```
+      will now error because it calculates the mean of `api99` before using it inside of the
+      calculation for `api_diff`. This behavior better matches `dplyr`'s so will likely be
+      kept.
+* Support for `group_map()`/`group_walk()`/`group_map_dfr()`, `group_split()`, 
+  `group_nest()` and `nest_by()` were added for `tbl_svy` objects.
+* Support `drop_na` from tidyr (#107).
+
+* `as_survey()` and `as_survey_()` are now idempotent: given a `srvyr` survey object (a `tbl_srv`), they return it unchanged. If extra arguments are provided, they are ignored with a warning (#97, thanks @krivit).
+
+* `rename_with()` now works with surveys (#96, thanks @krivit).
+
+# srvyr 0.4.0
 * Fix to ensure that ordered factors can be used as grouping variables or as inputs to `survey_count` and `survey_tally` (#92, thanks for reporting @szimmer & @walkerke & for fixing @bschneidr).
 
 * Fix to ensure that numeric values can be used in grouping variables (#78 & #74, thanks for reporting @tzoltak & fix @bschneidr)
@@ -89,7 +113,7 @@ so that the entire list is inside quotation.
 require a unique identifier. You also can now convert survey db-backed surveys
 to srvyr with as_survey.
 
-* srvyr now has a pkgdown site, check it out at <http://gdfe.co/srvyr>
+* srvyr now has a pkgdown site, check it out at <http://gdfe.co/srvyr/>
 
 # srvyr 0.2.2
 * Remove test blocking survey update

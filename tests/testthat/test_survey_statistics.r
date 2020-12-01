@@ -451,7 +451,8 @@ test_that(
           group_by(dname) %>%
           summarise(api99 = survey_var(api99))
       },
-      "^Population variance can't be computed because some groups contain less than 2 observations.$"
+      class = "error",
+      "Population variance can't be computed because some groups contain less than 2 observations"
     )
   }
 )
@@ -471,23 +472,19 @@ test_that(
 test_that("survey_STATISTIC functions fail on ungrouped surveys with no x provided",
           {
             errorPattern = "Variable should be provided as an argument to survey_STATISTIC() or grouped survey object should be used."
-            expect_error(summarise(dstrata, survey_mean()),
-                         sub("STATISTIC", "mean", errorPattern), fixed = TRUE)
-            expect_error(summarise(dstrata, survey_total()),
-                         sub("STATISTIC", "total", errorPattern), fixed = TRUE)
             errorPattern = "Variable should be provided as an argument to survey_STATISTIC()."
             expect_error(summarise(dstrata, survey_quantile()),
-                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_median()),
-                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_var()),
-                         sub("STATISTIC", "var", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "var", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_sd()),
-                         sub("STATISTIC", "var", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "var", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_ratio()),
-                         "numerator")
+                         "numerator", class = "error")
             expect_error(summarise(dstrata, survey_ratio(api99)),
-                         "denominator")
+                         "denominator", class = "error")
           }
 )
 
@@ -496,17 +493,17 @@ test_that("some survey_STATISTIC functions fail on grouped surveys with no x pro
             dstrataGrp = group_by(dstrata, stype)
             errorPattern = "Variable should be provided as an argument to survey_STATISTIC()."
             expect_error(summarise(dstrata, survey_quantile()),
-                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_median()),
-                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "quantile", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_var()),
-                         sub("STATISTIC", "var", errorPattern), fixed = TRUE)
+                         sub("STATISTIC", "var", errorPattern), fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_sd()),
-                         sub("STATISTIC", "var", errorPattern), fixed = TRUE)
-            expect_error(summarise(dstrata, survey_ratio(), fixed = TRUE),
+                         sub("STATISTIC", "var", errorPattern), fixed = TRUE, class = "error")
+            expect_error(summarise(dstrata, survey_ratio()), fixed = TRUE, class = "error",
                          "numerator")
             expect_error(summarise(dstrata, survey_ratio(api99)),
-                         "denominator")
+                         "denominator", class = "error")
           }
 )
 
@@ -514,38 +511,38 @@ test_that("survey_STATISTIC functions fail with x being a factor",
           {
             errorPattern = "Factor not allowed in survey functions, should be used as a grouping variable."
             expect_error(summarise(dstrata, survey_mean(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_total(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_ratio(stype, api99)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_ratio(api99, stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_quantile(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_median(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_var(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_sd(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             dstrataGrp = group_by(dstrata, awards)
             expect_error(summarise(dstrataGrp, survey_mean(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_total(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_ratio(stype, api99)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_ratio(api99, stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_quantile(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_median(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_var(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_sd(stype)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
           }
 )
 
@@ -553,38 +550,38 @@ test_that("survey_STATISTIC functions fail with x being a character",
           {
             errorPattern = "Character vectors not allowed in survey functions, should be used as a grouping variable."
             expect_error(summarise(dstrata, survey_mean(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_total(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_ratio(name, api99)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_ratio(api99, name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_quantile(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_median(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_var(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrata, survey_sd(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             dstrataGrp = group_by(dstrata, awards)
             expect_error(summarise(dstrataGrp, survey_mean(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_total(name))
-                         , errorPattern, fixed = TRUE)
+                         , errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_ratio(name, api99)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_ratio(api99, name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_quantile(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_median(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_var(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
             expect_error(summarise(dstrataGrp, survey_sd(name)),
-                         errorPattern, fixed = TRUE)
+                         errorPattern, fixed = TRUE, class = "error")
           }
 )
 
@@ -601,9 +598,6 @@ test_that("some other errors and warnings",
                                                         proportion = TRUE, deff = TRUE)),
                            "Cannot calculate design effects on proportions.",
                            fixed = TRUE)
-            expect_error(summarise(dstrataGrp, none = survey_mean(proportion = TRUE)),
-                         "proportion does not work with factors.",
-                         fixed = TRUE)
           }
 )
 
@@ -661,35 +655,52 @@ test_that(
 )
 
 test_that(
-  "unweighted works evaluates in correct environment", {
+  "unweighted allows passing functions from environment", {
     data(api, package = "survey")
     dclus1 <- as_survey_design(apiclus1, id = dnum, weights = pw, fpc = fpc)
 
-    wrong_wrapper <- function(x) {
+    test_reference <- dclus1 %>%
+      group_by(sch.wide) %>%
+      summarize(n = unweighted(length(api99)))
+
+
+    no_quo_wrapper <- function(x) {
       unweighted(length(x))
     }
 
-    expect_error(
-      test <- dclus1 %>%
-        group_by(sch.wide) %>%
-        summarize(n = wrong_wrapper(api99))
-    )
+    test1 <- dclus1 %>%
+      group_by(sch.wide) %>%
+      summarize(n = no_quo_wrapper(api99))
+
+    expect_equal(test1, test_reference)
+
 
     right_wrapper <- function(x) {
       x <- rlang::enquo(x)
       unweighted(length(!!x))
     }
 
-    test1 <- dclus1 %>%
+    test2 <- dclus1 %>%
       group_by(sch.wide) %>%
       summarize(n = right_wrapper(api99))
 
-    test2 <- dclus1 %>%
-      group_by(sch.wide) %>%
-      summarize(n = unweighted(length(api99)))
+    expect_equal(test2, test_reference)
 
+    # see issue https://github.com/gergness/srvyr/issues/103
+    func_of_svy <- function(svy) {
+      func_inside_func <- function(x) {
+        length(x)
+      }
 
-    expect_equal(test1, test2)
+      svy %>%
+        group_by(sch.wide) %>%
+        summarize(n = srvyr::unweighted(func_inside_func(api99)))
+    }
+
+    test3 <- dclus1 %>%
+      func_of_svy()
+
+    expect_equal(test3, test_reference)
   }
 )
 
