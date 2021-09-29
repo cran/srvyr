@@ -4,8 +4,8 @@ Title: 'dplyr'-Like Syntax for Summary Statistics of Survey Data
 Description: Use piping, verbs like 'group_by' and 'summarize', and other
     'dplyr' inspired syntactic style when calculating summary statistics on survey
     data using functions from the 'survey' package.
-Version: 1.0.1
-Date: 2021-03-28
+Version: 1.1.0
+Date: 2021-09-28
 Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com", role = c("aut", "cre")),
   person("Thomas", "Lumley", role = "ctb"),
   person("Tomasz", "\u017b\u00F3\u0142tak", role = "ctb"),
@@ -14,16 +14,16 @@ Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com",
 URL: http://gdfe.co/srvyr/, https://github.com/gergness/srvyr/
 BugReports: https://github.com/gergness/srvyr/issues
 Depends: R (>= 3.1.2)
-Imports: dplyr (>= 0.7), magrittr, rlang, survey, tibble, tidyr,
-        tidyselect
+Imports: dplyr (>= 1.0), magrittr, methods, rlang, survey (>= 4.1),
+        tibble, tidyr, tidyselect, vctrs (>= 0.3.0)
 License: GPL-2 | GPL-3
 Suggests: convey, DBI, dbplyr, ggplot2, knitr, laeken, Matrix,
         rmarkdown (>= 2.2.2), pander, RSQLite, survival, testthat
 Encoding: UTF-8
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 NeedsCompilation: no
-Packaged: 2021-03-28 21:07:07 UTC; gregfreedmanellis
+Packaged: 2021-09-29 01:34:35 UTC; gregfreedmanellis
 Author: Greg Freedman Ellis [aut, cre],
   Thomas Lumley [ctb],
   Tomasz Żółtak [ctb],
@@ -31,4 +31,4 @@ Author: Greg Freedman Ellis [aut, cre],
   Pavel N. Krivitsky [ctb]
 Maintainer: Greg Freedman Ellis <greg.freedman@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-03-28 21:40:02 UTC
+Date/Publication: 2021-09-29 04:40:02 UTC

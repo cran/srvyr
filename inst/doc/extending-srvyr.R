@@ -26,7 +26,7 @@ survey_gini <- function(
   
   out <- convey::svygini(~`__SRVYR_TEMP_VAR__`, na.rm = na.rm, design = .svy)
   out <- srvyr::get_var_est(out, vartype)
-  out
+  as_srvyr_result_df(out)
 }
 
 ## -----------------------------------------------------------------------------

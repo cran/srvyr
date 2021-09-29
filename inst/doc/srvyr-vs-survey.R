@@ -109,28 +109,78 @@ ggplot(data = out, aes(x = stype, y = api_diff, group = hs_grad_pct, fill = hs_g
 
 
 
+## -----------------------------------------------------------------------------
+# Set pillar print methods so tibble has more decimal places
+old_sigfig <- options("pillar.sigfig")
+options("pillar.sigfig" = 5)
+
+# survey default
+estimate <- svymean(~api99, strat_design)
+confint(estimate)
+
+# srvyr default
+strat_design %>%
+  summarize(x = survey_mean(api99, vartype = "ci"))
+
+# setting the degrees of freedom so srvyr matches survey default
+strat_design %>%
+  summarize(x = survey_mean(api99, vartype = "ci", df = Inf)) %>%
+  print()
+
+# setting the degrees of freedom so survey matches survey default
+confint(estimate, df = degf(strat_design))
+
+# reset significant figures
+options("pillar.sigfig" = old_sigfig)
+
 ## ---- message = FALSE---------------------------------------------------------
 glm <- svyglm(api00 ~ ell + meals + mobility, design = strat_design)
 summary(glm)
 
 ## ---- message = FALSE---------------------------------------------------------
-fpc_var <- sym("fpc")
-srs_design_srvyr <- apisrs %>% as_survey_design(fpc = !!fpc_var)
+strat_design %>%
+  summarize(prop_api99_over_700 = survey_mean(api99 > 700))
 
-grouping_var <- sym("stype")
-api_diff <- quo(api00 - api99)
+## ---- message = FALSE---------------------------------------------------------
+strat_design %>%
+  group_by(awards) %>%
+  summarize(percentage = 100 * survey_mean())
 
-srs_design_srvyr %>%
-  group_by(!!grouping_var) %>% 
-  summarize(
-    api_increase = survey_total((!!api_diff) >= 0),
-    api_decrease = survey_total((!!api_diff) < 0)
-  )
+## ---- message = FALSE---------------------------------------------------------
+strat_design %>%
+  group_by(api99_above_700 = api99 > 700) %>%
+  summarize(api00_mn = survey_mean(api00))
 
+## ---- message = FALSE, eval=FALSE---------------------------------------------
+#  # BAD DON'T DO THIS!
+#  strat_design %>%
+#    group_by(awards) %>%
+#    summarize(percentage = 100 * survey_mean(vartype = "var"))
+#  # VARIANCE IS WRONG
 
+## ---- message = FALSE---------------------------------------------------------
+mean_with_ci <- function(.data, var) {
+  summarize(.data, mean = survey_mean({{var}}, vartype = "ci"))
+}
+
+srs_design_srvyr <- apisrs %>% as_survey_design(fpc = fpc)
+
+mean_with_ci(srs_design_srvyr, api99)
 
 ## -----------------------------------------------------------------------------
 # Calculate survey mean for all variables that have names starting with "api"
 strat_design %>%
-  summarize_at(vars(starts_with("api")), survey_mean)
+  summarize(across(starts_with("api"), survey_mean))
+
+## -----------------------------------------------------------------------------
+# Calculate the proportion that falls into each category of `awards` per `stype`
+strat_design %>%
+  group_by(stype, awards) %>%
+  summarize(prop = survey_prop())
+
+## -----------------------------------------------------------------------------
+# Calculate the proportion that falls into each category of both `awards` and `stype`
+strat_design %>%
+  group_by(interact(stype, awards)) %>%
+  summarize(prop = survey_prop())
 

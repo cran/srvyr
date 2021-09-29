@@ -1,9 +1,14 @@
-#' Calculate the mean and its variation using survey methods
+#' Calculate mean/proportion and its variation using survey methods
 #'
 #' Calculate means and proportions from complex survey data. A wrapper
 #' around \code{\link[survey]{svymean}}, or if \code{proportion = TRUE},
 #' \code{\link[survey]{svyciprop}}. \code{survey_mean} should always be
 #' called from \code{\link{summarise}}.
+#'
+#' Using \code{survey_prop} is equivalent to leaving out the \code{x} argument in
+#' \code{survey_mean} and this calculates the proportion represented within the
+#' data, with the last grouping variable "unpeeled". \code{\link{interact}}
+#' allows for "unpeeling" multiple variables at once.
 #'
 #' @param x A variable or expression, or empty
 #' @param na.rm A logical value to indicate whether missing values should be dropped
@@ -24,8 +29,7 @@
 #'           \code{\link[survey]{svyciprop}}.
 #' @param ... Ignored
 #' @examples
-#' library(survey)
-#' data(api)
+#' data(api, package = "survey")
 #'
 #' dstrata <- apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw)
@@ -38,10 +42,30 @@
 #'   group_by(awards) %>%
 #'   summarise(api00 = survey_mean(api00))
 #'
-#' # Leave x empty to calculate the proportion in each group
+#' # Use `survey_prop` calculate the proportion in each group
+#' dstrata %>%
+#'   group_by(awards) %>%
+#'   summarise(pct = survey_prop())
+#'
+#' # Or you can also leave  out `x` in `survey_mean`, so this is equivalent
 #' dstrata %>%
 #'   group_by(awards) %>%
 #'   summarise(pct = survey_mean())
+#'
+#' # When there's more than one group, the last group is "peeled" off and proportions are
+#' # calculated within that group, each adding up to 100%.
+#' # So in this example, the sum of prop is 200% (100% for awards=="Yes" &
+#' # 100% for awards=="No")
+#' dstrata %>%
+#'   group_by(stype, awards) %>%
+#'   summarize(prop = survey_prop())
+#'
+#' # The `interact` function can help you calculate the proportion over
+#' # the interaction of two or more variables
+#' # So in this example, the sum of prop is 100%
+#' dstrata %>%
+#'   group_by(interact(stype, awards)) %>%
+#'   summarize(prop = survey_prop())
 #'
 #' # Setting proportion = TRUE uses a different method for calculating confidence intervals
 #' dstrata %>%
@@ -314,20 +338,24 @@ survey_ratio <- function(
 #' around \code{\link[survey]{svyquantile}}. \code{survey_quantile} and
 #' \code{survey_median} should always be called from \code{\link{summarise}}.
 #'
+#' Note that the behavior of these functions has changed in srvyr version 1.1,
+#' but the old functions are still (currently) supported as
+#' \code{\link{survey_old_quantile}} and \code{survey_old_median} if you need
+#' to replicate the old results. For more details about what has changed, see
+#' Thomas Lumley's blog post on the changes, available here:
+#' <https://notstatschat.rbind.io/2021/07/20/what-s-new-in-the-survey-package/>
+#'
 #' @param x A variable or expression
 #' @param na.rm A logical value to indicate whether missing values should be dropped
 #' @param quantiles A vector of quantiles to calculate
-#' @param vartype NULL to report no variability (default), otherwise one or more of:
-#'                standard error ("se") confidence interval ("ci") (variance and coefficient
-#'                of variation not available).
-#' @param level A single number indicating the confidence level (only one level allowed)
-#' @param q_method See "method" in \code{\link[stats]{approxfun}}
-#' @param f See \code{\link[stats]{approxfun}}
-#' @param interval_type See \code{\link[survey]{svyquantile}}
-#' @param ties See \code{\link[survey]{svyquantile}}
+#' @param vartype NULL to report no variability. Otherwise one or more of: standard error ("se", the default),
+#'                confidence interval ("ci"), variance ("var") or coefficient of variation
+#'                ("cv").
+#' @param level A single number indicating the confidence level (only one level allowed). Note that this may effect estimated standard errors (see \code{\link[survey]{svyquantile}} details on \code{alpha}, which equals \code{1-level}).
+#' @param interval_type See \code{\link[survey]{svyquantile}}. Note that \code{interval_type = "quantile"} is only available for replicate designs, and \code{interval_type = "score"} is unavailable for replicate designs.
+#' @param qrule See \code{\link[survey]{svyquantile}}
 #' @param df A number indicating the degrees of freedom for t-distribution. The
-#'           default, Inf uses the normal distribution (matches the survey package).
-#'           Also, has no effect for \code{type = "betaWald"}.
+#'           default, NULL, uses the design degrees of freedom (matches the survey package).
 #' @param ... Ignored
 #' @examples
 #' library(survey)
@@ -346,6 +374,130 @@ survey_ratio <- function(
 #'
 #' @export
 survey_quantile <- function(
+  x,
+  quantiles,
+  na.rm = FALSE,
+  vartype = c("se", "ci", "var", "cv"),
+  level = 0.95,
+  interval_type = c("mean", "beta","xlogit", "asin", "score", "quantile"),
+  qrule = c("math","school","shahvaish","hf1","hf2","hf3",
+            "hf4","hf5","hf6","hf7","hf8","hf9"),
+  df = NULL,
+  ...
+) {
+  .svy <- cur_svy()
+
+  if (!is.null(vartype)) {
+    vartype <- if (missing(vartype)) "se" else match.arg(vartype, several.ok = TRUE)
+  }
+  if (missing(interval_type)) interval_type <- "mean"
+  interval_type <- match.arg(interval_type, several.ok = TRUE)
+  if (missing(qrule)) qrule <- "math"
+
+  if (length(level) > 1) {
+    warning("Only the first confidence level will be used")
+    level <- level[1]
+  }
+
+  # Because of machine precision issues, 1 - 0.95 != 0.05...
+  # Here's a hacky way to force it, though it technically limits
+  # us to 7 digits of precision in alpha (seems like enough,
+  # we could go higher, but I worry about 32bit vs 64bit systems)
+  alpha = round(1 - level, 7)
+
+  if (missing(x)) stop("Variable should be provided as an argument to survey_quantile().")
+  stop_for_factor(x)
+  .svy <- set_survey_vars(.svy, x)
+
+  stat <- survey::svyquantile(
+    x = ~`__SRVYR_TEMP_VAR__`, design = .svy,
+    quantiles = quantiles, na.rm = na.rm,
+    ci = TRUE, alpha = alpha,
+    interval.type = interval_type, qrule = qrule, df = df
+  )
+
+  out <- get_var_est_quantile(stat, vartype, q = quantiles, level = level)
+  out
+}
+
+#' @export
+#' @rdname survey_quantile
+survey_median <- function(
+  x,
+  na.rm = FALSE,
+  vartype = c("se", "ci", "var", "cv"),
+  level = 0.95,
+  interval_type = c("mean", "beta","xlogit", "asin", "score", "quantile"),
+  qrule = c("math","school","shahvaish","hf1","hf2","hf3",
+            "hf4","hf5","hf6","hf7","hf8","hf9"),
+  df = NULL,
+  ...
+) {
+  .svy <- cur_svy()
+
+  if (!is.null(vartype)) {
+    vartype <- if (missing(vartype)) "se" else match.arg(vartype, several.ok = TRUE)
+  }
+  if (missing(interval_type)) interval_type <- "mean"
+  interval_type <- match.arg(interval_type, several.ok = TRUE)
+  if (missing(qrule)) qrule <- "math"
+
+  if (length(level) > 1) {
+    warning("Only the first confidence level will be used")
+    level <- level[1]
+  }
+
+  out <- survey_quantile(
+    x = x, quantiles = 0.5, na.rm = na.rm,
+    vartype = vartype, ci = TRUE, level = level,
+    qrule = qrule, interval_type = interval_type, df = df
+  )
+  names(out) = sub("^_q50", "", names(out))
+  out
+}
+
+#' Calculate the quantile and its variation using survey methods
+#'
+#' Calculate quantiles from complex survey data. A wrapper
+#' around \code{\link[survey]{oldsvyquantile}}, which is a version of the function
+#' from before version 4.1 of the survey package, available for backwards compatibility.
+#' \code{survey_old_quantile} and \code{survey_old_median} should always be
+#' called from \code{\link{summarise}}. See Thomas Lumley's blogpost
+#' <https://notstatschat.rbind.io/2021/07/20/what-s-new-in-the-survey-package/>
+#' for more details.
+#'
+#' @param x A variable or expression
+#' @param na.rm A logical value to indicate whether missing values should be dropped
+#' @param quantiles A vector of quantiles to calculate
+#' @param vartype NULL to report no variability (default), otherwise one or more of:
+#'                standard error ("se") confidence interval ("ci") (variance and coefficient
+#'                of variation not available).
+#' @param level A single number indicating the confidence level (only one level allowed)
+#' @param q_method See "method" in \code{\link[stats]{approxfun}}
+#' @param f See \code{\link[stats]{approxfun}}
+#' @param interval_type See \code{\link[survey]{oldsvyquantile}}
+#' @param ties See \code{\link[survey]{oldsvyquantile}}
+#' @param df A number indicating the degrees of freedom for t-distribution. The
+#'           default, Inf uses the normal distribution (matches the survey package).
+#'           Also, has no effect for \code{type = "betaWald"}.
+#' @param ... Ignored
+#' @examples
+#' library(survey)
+#' data(api)
+#'
+#' dstrata <- apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw)
+#'
+#' dstrata %>%
+#'   summarise(api99 = survey_old_quantile(api99, c(0.25, 0.5, 0.75)),
+#'             api00 = survey_old_median(api00, vartype = c("ci")))
+#'
+#' dstrata %>%
+#'   group_by(awards) %>%
+#'   summarise(api00 = survey_old_median(api00))
+#'
+#' @export
+survey_old_quantile <- function(
   x,
   quantiles,
   na.rm = FALSE,
@@ -384,14 +536,7 @@ survey_quantile <- function(
   stop_for_factor(x)
   .svy <- set_survey_vars(.svy, x)
 
-  # TODO: switch to improved svyquantile
-  if (utils::packageVersion("survey") >= "4.1") {
-    svyq_func <- get("oldsvyquantile", asNamespace("survey"))
-  } else {
-    svyq_func <- survey::svyquantile
-  }
-
-  stat <- svyq_func(
+  stat <- survey::oldsvyquantile(
     ~`__SRVYR_TEMP_VAR__`, .svy, quantiles = quantiles, na.rm = na.rm,
     ci = TRUE, alpha = alpha, method = q_method, f = f,
     interval.type = interval_type, ties = ties, df = df
@@ -402,8 +547,8 @@ survey_quantile <- function(
 }
 
 #' @export
-#' @rdname survey_quantile
-survey_median <- function(
+#' @rdname survey_old_quantile
+survey_old_median <- function(
   x,
   na.rm = FALSE,
   vartype = c("se", "ci"),
@@ -431,7 +576,7 @@ survey_median <- function(
     level <- level[1]
   }
 
-  out <- survey_quantile(
+  out <- survey_old_quantile(
     x, quantiles = 0.5, na.rm = na.rm, vartype = vartype, level = level, q_method = q_method,
     f = f, interval_type = interval_type, ties = ties, df = df
   )
@@ -554,8 +699,8 @@ survey_sd <- function(
 #' \link[rlang]{nse-force}, or the dplyr vignette called
 #' 'programming' for more information.
 #'
-#' @param x A variable or expression
-#' @param ... Ignored
+#' @param ... variables or expressions, calculated on the unweighted data.frame
+#' behind the \code{tbl_svy} object.
 #' @examples
 #' library(survey)
 #' library(dplyr)
@@ -606,18 +751,19 @@ survey_sd <- function(
 #' # Notice how the results are different when using `unweighted()`
 #'
 #' @export
-unweighted <- function(x, ...) {
+unweighted <- function(...) {
   .svy <- cur_svy()
 
-  dots <- rlang::enquo(x)
+  dots <- rlang::enquos(...)
 
   if (is.calibrated(.svy) | is.pps(.svy)) {
     excluded_rows <- is.infinite(.svy[['prob']])
-    out <- summarize(.svy[["variables"]][!excluded_rows,], !!dots)
+    out <- summarize(.svy[["variables"]][!excluded_rows,], !!!dots)
   } else {
-    out <- summarize(.svy[["variables"]], !!dots)
+    out <- summarize(.svy[["variables"]], !!!dots)
   }
 
-  names(out)[length(names(out))] <- ""
-  out
+  # don't use default dplyr names for dots (but if explicitly named then do)
+  names(out) <- ifelse(names(dots) == "", "", names(out))
+  as_srvyr_result_df(out)
 }

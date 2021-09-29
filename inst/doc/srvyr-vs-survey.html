@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman" />
 
-<meta name="date" content="2021-03-28" />
+<meta name="date" content="2021-09-28" />
 
 <title>srvyr compared to the survey package</title>
 
@@ -28,7 +28,14 @@
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -133,15 +140,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore"><code>srvyr</code> compared to the <code>survey</code> package</h1>
 <h4 class="author">Greg Freedman</h4>
-<h4 class="date">2021-03-28</h4>
+<h4 class="date">2021-09-28</h4>
 
 
 
-<p>The <code>srvyr</code> package aims to add <code>dplyr</code> like syntax to the <code>survey</code> package. This vignette focuses on how <code>srvyr</code> compares to the <code>survey</code> package, for more information about survey design and analysis, check out the vignettes in the <code>survey</code> package, or Thomas Lumley’s book, <a href="http://r-survey.r-forge.r-project.org/svybook/"><em>Complex Surveys: A Guide to Analysis Using R</em></a>.</p>
+<p>The <code>srvyr</code> package adds <code>dplyr</code> like syntax to the <code>survey</code> package. This vignette focuses on how <code>srvyr</code> compares to the <code>survey</code> package, for more information about survey design and analysis, check out the vignettes in the <code>survey</code> package, or Thomas Lumley’s book, <a href="http://r-survey.r-forge.r-project.org/svybook/"><em>Complex Surveys: A Guide to Analysis Using R</em></a>. (Also see the bottom of this document for some more resources).</p>
 <p>Everything that <code>srvyr</code> can do, can also be done in <code>survey</code>. In fact, behind the scenes the <code>survey</code> package is doing all of the hard work for <code>srvyr</code>. <code>srvyr</code> strives to make your code simpler and more easily readable to you, especially if you are already used to the <code>dplyr</code> package.</p>
 <div id="motivating-example" class="section level1">
 <h1>Motivating example</h1>
-<p>The <code>dplyr</code> package has made it fast and easy to write code to summarize data. For example, if we wanted to check how the year-to-year change in academic progress indicator score varied by school level and percent of parents were high school graduates, we can do this:</p>
+<p>The <code>dplyr</code> package has made it easy to write code to summarize data. For example, if we wanted to check how the year-to-year change in academic progress indicator score varied by school level and percent of parents were high school graduates, we can do this:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survey)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
@@ -206,8 +213,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">api_diff =</span> <span class="fu">survey_mean</span>(api_diff, <span class="at">vartype =</span> <span class="st">&quot;ci&quot;</span>))</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>out</span></code></pre></div>
-<pre><code>##   api_diff api_diff_low api_diff_upp
-## 1 32.89252     28.84756     36.93747</code></pre>
+<pre><code>## # A tibble: 1 × 3
+##   api_diff api_diff_low api_diff_upp
+##      &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+## 1     32.9         28.8         36.9</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Using survey</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>api_diff, strat_design_survey)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -226,7 +235,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stype) <span class="sc">%&gt;%</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">api_increase =</span> <span class="fu">survey_total</span>(api_diff <span class="sc">&gt;=</span> <span class="dv">0</span>),</span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">api_decrease =</span> <span class="fu">survey_total</span>(api_diff <span class="sc">&lt;</span> <span class="dv">0</span>))</span></code></pre></div>
-<pre><code>## # A tibble: 3 x 5
+<pre><code>## # A tibble: 3 × 5
 ##   stype api_increase api_increase_se api_decrease api_decrease_se
 ##   &lt;fct&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
 ## 1 E            4067.           119.         354.            119. 
@@ -251,7 +260,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(awards) <span class="sc">%&gt;%</span></span>
 <span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">proportion =</span> <span class="fu">survey_mean</span>(),</span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">total =</span> <span class="fu">survey_total</span>())</span></code></pre></div>
-<pre><code>## # A tibble: 2 x 5
+<pre><code>## # A tibble: 2 × 5
 ##   awards proportion proportion_se total total_se
 ##   &lt;fct&gt;       &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 No           0.38        0.0338 2354.     210.
@@ -273,7 +282,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>strat_design_srvyr <span class="sc">%&gt;%</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stype) <span class="sc">%&gt;%</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">n =</span> <span class="fu">unweighted</span>(<span class="fu">n</span>()))</span></code></pre></div>
-<pre><code>## # A tibble: 3 x 2
+<pre><code>## # A tibble: 3 × 2
 ##   stype     n
 ##   &lt;fct&gt; &lt;int&gt;
 ## 1 E       100
@@ -308,13 +317,48 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>## Warning: Ignoring unknown parameters: stat</code></pre>
 <p><img src="data:image/png;base64,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TW/fvxW12dhhAHm7HJtCFtnA80OxHgHTGUDWawJqRAIkQALWIgCPyd69e50qlZCQIDDEKCTgbwI0gPzdAiyfBEiABCxGAB6mdu3aOdVq9OjR0qtXL6fHmEgCviRAA8iXtFkWCZAACQQAgZiYGJk3b57S9LPPPpONGzfKlClT1P4VV1wRAASoohkI0AAyQyuxjiRAAiRgIgKhoaHSqlUrVePly5cLBn7o+yZSg1W1OAFzjye3eONQPRIgARIgARIgAe8QoAHkHa68KgmQAAmQAAmQgIEJ0AAycOOwaiRAAiRAAiRAAt4hQAPIO1x5VRIgARIgARIgAQMToAFk4MZh1UiABEiABEiABLxDgAaQd7jyqiRAAiRAAiRAAgYmQAPIwI3DqpEACZAACZAACXiHAA0g73DlVUmABEiABEigWAJffvmlLFmypNh8Rs8wefJkwfp2vpLk5ORSFxXwEyFGDx1caohuXSAzUyK+WyrRRxPdOq00mTNw8n29S3MJnksCJEACJOAFAl988YXUqFFDOnfu7IWr++6SkyZNkqefflpatmzp9UIHDhwoVatWlZdeeqlUZdEDVCp8PJkESIAESIAESMCXBH788UePFOczD9CpU6fk559/lvr160vt2rUdKo9Vgw8dOiRNmzaVSpUqORzjDgmQAAmQAAlYmUBeXp58+umnsnDhQqlQoYI8+uijcuutt9pU/vzzz2X+/PmSqfUgXHPNNfLCCy9IbGys7XhRGxkZGeraK1askLi4OBk8eLC8++67MmLECKlWrZq89957cuWVVwqOnzx5Ul555RX1O71o0SJVJn6bke/BBx+Ujh072opC/jlz5gi6ovr27WtLd2Vj06ZN8v3330vr1q1l6tSpEh4eLt27d5du3brZTj9z5ox88sknsmHDBmnUqJHcd9990qxZMxk3bpwkJiYqViEhITJs2DDbOe5u+MQDtHjxYtVgR48eVS4r+/7O8ePHy5gxY2Tbtm3y+OOPy+HDh93VgflJgARIgARIwLQEZs6cKbNnz1YGxvnz59XfX3/9Vekzffp0ee655+Smm26S+++/X1avXi3t2rVzWdennnpKXn/9dbUWGwyNtm3bKsPi3Llz6hrfffed9O/fX3766SdJTU2VcuXKyfvvvy89e/YULFz7yCOPSFpamnTq1Em2bNliO6dr164Cw6158+by2GOP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" /><!-- --></p>
 </div>
+<div id="comparison-to-the-survey-package-degrees-of-freedom" class="section level1">
+<h1>Comparison to the survey package (Degrees of freedom)</h1>
+<p>For the most part, <code>srvyr</code> tries to be a drop-in replacement for the survey package, only changing the syntax that you wrote. However, the way that calculations of degrees of freedom when calculating confidence intervals is different.</p>
+<p><code>srvyr</code> assumes that you want to use the true degrees of freedom by default, but the <code>survey</code> package uses <code>Inf</code> as the default. You can use the argument <code>df</code> to get the same result as the survey package.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set pillar print methods so tibble has more decimal places</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>old_sigfig <span class="ot">&lt;-</span> <span class="fu">options</span>(<span class="st">&quot;pillar.sigfig&quot;</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="st">&quot;pillar.sigfig&quot;</span> <span class="ot">=</span> <span class="dv">5</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># survey default</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>estimate <span class="ot">&lt;-</span> <span class="fu">svymean</span>(<span class="sc">~</span>api99, strat_design)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(estimate)</span></code></pre></div>
+<pre><code>##          2.5 %   97.5 %
+## api99 609.8659 648.9238</code></pre>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># srvyr default</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">x =</span> <span class="fu">survey_mean</span>(api99, <span class="at">vartype =</span> <span class="st">&quot;ci&quot;</span>))</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##        x  x_low  x_upp
+##    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1 629.39 609.75 649.04</code></pre>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setting the degrees of freedom so srvyr matches survey default</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">x =</span> <span class="fu">survey_mean</span>(api99, <span class="at">vartype =</span> <span class="st">&quot;ci&quot;</span>, <span class="at">df =</span> <span class="cn">Inf</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##        x  x_low  x_upp
+##    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1 629.39 609.87 648.92</code></pre>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setting the degrees of freedom so survey matches survey default</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(estimate, <span class="at">df =</span> <span class="fu">degf</span>(strat_design))</span></code></pre></div>
+<pre><code>##          2.5 %   97.5 %
+## api99 609.7452 649.0445</code></pre>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># reset significant figures</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="st">&quot;pillar.sigfig&quot;</span> <span class="ot">=</span> old_sigfig)</span></code></pre></div>
+</div>
 <div id="grab-bag" class="section level1">
 <h1>Grab Bag</h1>
 <div id="using-survey-functions-on-srvyr-objects" class="section level2">
 <h2>Using <code>survey</code> functions on <code>srvyr</code> objects</h2>
 <p>Because <code>srvyr</code> objects are just <code>survey</code> objects with some extra structure, all of the functions from <code>survey</code> will still work with them. If you need to calculate something beyond simple summary statistics, you can use <code>survey</code> functions.</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>glm <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(api00 <span class="sc">~</span> ell <span class="sc">+</span> meals <span class="sc">+</span> mobility, <span class="at">design =</span> strat_design)</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(glm)</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>glm <span class="ot">&lt;-</span> <span class="fu">svyglm</span>(api00 <span class="sc">~</span> ell <span class="sc">+</span> meals <span class="sc">+</span> mobility, <span class="at">design =</span> strat_design)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(glm)</span></code></pre></div>
 <pre><code>## 
 ## Call:
 ## svyglm(formula = api00 ~ ell + meals + mobility, design = strat_design)
@@ -335,40 +379,152 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## 
 ## Number of Fisher Scoring iterations: 2</code></pre>
 </div>
-<div id="standard-evaluation" class="section level2">
-<h2>Standard evaluation</h2>
-<p>Srvyr now supports the standard evaluation conventions introduced in dplyr version 0.7 and rlang. If you’d like to use a function programmatically, you can use the functions from rlang like <code>rlang::quo()</code> or <code>rlang::sym()</code> to capture the expression and <code>rlang::!!</code> to unquote it. All of these functions are re-exported by srvyr, so you don’t need to load the rlang library to use them.</p>
+<div id="using-expressions-to-create-variables-on-the-fly" class="section level2">
+<h2>Using expressions to create variables on the fly</h2>
+<p>Like <code>dplyr</code>, <code>srvyr</code> allows you to use expressions in the arguments, allowing you to create variables in a single step. For example, you can use expressions:</p>
+<ol style="list-style-type: decimal">
+<li>as the arguments inside the survey statistic functions like <code>survey_mean</code></li>
+</ol>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">prop_api99_over_700 =</span> <span class="fu">survey_mean</span>(api99 <span class="sc">&gt;</span> <span class="dv">700</span>))</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 2
+##   prop_api99_over_700 prop_api99_over_700_se
+##                 &lt;dbl&gt;                  &lt;dbl&gt;
+## 1               0.306                 0.0356</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>as an argument to <code>summarize</code></li>
+</ol>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(awards) <span class="sc">%&gt;%</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">percentage =</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">survey_mean</span>())</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 3
+##   awards percentage percentage_se
+##   &lt;fct&gt;       &lt;dbl&gt;         &lt;dbl&gt;
+## 1 No           36.1          3.44
+## 2 Yes          63.9          3.44</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>and you can even create varables inside of <code>group_by</code></li>
+</ol>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">api99_above_700 =</span> api99 <span class="sc">&gt;</span> <span class="dv">700</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">api00_mn =</span> <span class="fu">survey_mean</span>(api00))</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 3
+##   api99_above_700 api00_mn api00_mn_se
+##   &lt;lgl&gt;              &lt;dbl&gt;       &lt;dbl&gt;
+## 1 FALSE               599.        7.88
+## 2 TRUE                805.        7.15</code></pre>
+<p>Though on-the-fly expressions are syntactically valid, it is possible to make statistically invalid numbers from them. For example, though the standard error and confidence intervals can be multiplied by a scalar (like 100), the variance does not scale the same way, so the following is invalid:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BAD DON&#39;T DO THIS!</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(awards) <span class="sc">%&gt;%</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">percentage =</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">survey_mean</span>(<span class="at">vartype =</span> <span class="st">&quot;var&quot;</span>))</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co"># VARIANCE IS WRONG</span></span></code></pre></div>
+</div>
+<div id="non-standard-evaluation" class="section level2">
+<h2>Non-Standard evaluation</h2>
+<p>Srvyr supports the non-standard evaluation conventions that dplyr uses. If you’d like to use a function programmatically, you can use the functions from rlang like the <code>{{</code> operator (aka “curly curly”) from <code>rlang</code>.</p>
 <p>Here’s a quick example, but please see the dplyr vignette <a href="https://dplyr.tidyverse.org/articles/programming.html"><code>vignette(&quot;programming&quot;, package = &quot;dplyr&quot;)</code></a> for more details.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fpc_var <span class="ot">&lt;-</span> <span class="fu">sym</span>(<span class="st">&quot;fpc&quot;</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>srs_design_srvyr <span class="ot">&lt;-</span> apisrs <span class="sc">%&gt;%</span> <span class="fu">as_survey_design</span>(<span class="at">fpc =</span> <span class="sc">!!</span>fpc_var)</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>grouping_var <span class="ot">&lt;-</span> <span class="fu">sym</span>(<span class="st">&quot;stype&quot;</span>)</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>api_diff <span class="ot">&lt;-</span> <span class="fu">quo</span>(api00 <span class="sc">-</span> api99)</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>srs_design_srvyr <span class="sc">%&gt;%</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="sc">!!</span>grouping_var) <span class="sc">%&gt;%</span> </span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">api_increase =</span> <span class="fu">survey_total</span>((<span class="sc">!!</span>api_diff) <span class="sc">&gt;=</span> <span class="dv">0</span>),</span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">api_decrease =</span> <span class="fu">survey_total</span>((<span class="sc">!!</span>api_diff) <span class="sc">&lt;</span> <span class="dv">0</span>)</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## # A tibble: 3 x 5
-##   stype api_increase api_increase_se api_decrease api_decrease_se
-##   &lt;fct&gt;        &lt;dbl&gt;           &lt;dbl&gt;        &lt;dbl&gt;           &lt;dbl&gt;
-## 1 E            4057.            205.         341.            98.5
-## 2 H             557.            124.         217.            79.4
-## 3 M             898.            152.         124.            60.5</code></pre>
-<p>Srvyr will also follow dplyr’s lead on deprecating the old method of NSE, the so-called “underscore functions” (like <code>summarize_</code>). Currently, they have been soft-deprecated, but I expect them to be removed altogether in some future version of srvyr.</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>mean_with_ci <span class="ot">&lt;-</span> <span class="cf">function</span>(.data, var) {</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(.data, <span class="at">mean =</span> <span class="fu">survey_mean</span>({{var}}, <span class="at">vartype =</span> <span class="st">&quot;ci&quot;</span>))</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>srs_design_srvyr <span class="ot">&lt;-</span> apisrs <span class="sc">%&gt;%</span> <span class="fu">as_survey_design</span>(<span class="at">fpc =</span> fpc)</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mean_with_ci</span>(srs_design_srvyr, api99)</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##    mean mean_low mean_upp
+##   &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+## 1  625.     606.     643.</code></pre>
+<p>Srvyr will also follow dplyr’s lead on deprecating the old methods of NSE, such as <code>rlang::quo</code>, and <code>!!</code>, in addition to the so-called “underscore functions” (like <code>summarize_</code>). Currently, they have been soft-deprecated, they may be removed altogether in some future version of srvyr.</p>
 </div>
-<div id="scoped-functions" class="section level2">
-<h2>Scoped functions</h2>
-<p>Srvyr has also been able to take advantage of the new-ish dplyr “scoped” variants of the main manipulation functions like <code>summarize_at()</code>. These functions allow you to quickly calculate summary statistics for multiple variables. For example:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate survey mean for all variables that have names starting with &quot;api&quot;</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize_at</span>(<span class="fu">vars</span>(<span class="fu">starts_with</span>(<span class="st">&quot;api&quot;</span>)), survey_mean)</span></code></pre></div>
-<pre><code>##      api00 api00_se    api99 api99_se  api.stu api.stu_se
-## 1 662.2874 9.408941 629.3948 9.963947 498.2255   16.06028</code></pre>
-<p>The dplyr documentation <code>dplyr::scoped</code> provides more details.</p>
+<div id="working-column-wise" class="section level2">
+<h2>Working column-wise</h2>
+<p>As of version 1.0 of srvyr, it supports dplyr’s across function, so when you want to calculate a statistic on more than one variable, it is easy to do so. See <a href="https://dplyr.tidyverse.org/articles/colwise.html"><code>vignette(&quot;colwise&quot;, package = &quot;dplyr&quot;)</code></a> for more details, but here is another quick example:</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate survey mean for all variables that have names starting with &quot;api&quot;</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">&quot;api&quot;</span>), survey_mean))</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 6
+##   api00 api00_se api99 api99_se api.stu api.stu_se
+##   &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;      &lt;dbl&gt;
+## 1  662.     9.41  629.     9.96    498.       16.1</code></pre>
+<p>Srvyr also supports older methods of working column-wise, the “scoped variants”, such as <code>summarize_at</code>, <code>summarize_if</code>, <code>summarize_all</code> and <code>summarize_each</code>. Again, these are maintained for backwards compatibility, matching what the tidyverse team has done, but may be removed from a future version.</p>
 </div>
+<div id="calculating-proportions-in-groups" class="section level2">
+<h2>Calculating proportions in groups</h2>
+<p>You can calculate the weighted proportion that falls into a group using the <code>survey_prop()</code> function (or the <code>survey_mean()</code> function with no <code>x</code> argument). The proportion is calculated by “unpeeling” the last variable used in <code>group_by()</code> and then calculating the proportion within the other groups that fall into the last group (so that the proportion within each group that was unpeeled sums to 100%).</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the proportion that falls into each category of `awards` per `stype`</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stype, awards) <span class="sc">%&gt;%</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">prop =</span> <span class="fu">survey_prop</span>())</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 4
+## # Groups:   stype [3]
+##   stype awards  prop prop_se
+##   &lt;fct&gt; &lt;fct&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+## 1 E     No      0.27  0.0441
+## 2 E     Yes     0.73  0.0441
+## 3 H     No      0.68  0.0644
+## 4 H     Yes     0.32  0.0644
+## 5 M     No      0.52  0.0696
+## 6 M     Yes     0.48  0.0696</code></pre>
+<p>If you want to calculate the proportion for groups from multiple variables at the same time that add up to 100%, the <code>interact</code> function can help. The <code>interact</code> function creates a variable that is automatically split apart so that more than one variable can be unpeeled.</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate the proportion that falls into each category of both `awards` and `stype`</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>strat_design <span class="sc">%&gt;%</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="fu">interact</span>(stype, awards)) <span class="sc">%&gt;%</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">prop =</span> <span class="fu">survey_prop</span>())</span></code></pre></div>
+<pre><code>## # A tibble: 6 × 4
+##   stype awards   prop prop_se
+##   &lt;fct&gt; &lt;fct&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 E     No     0.193  0.0315 
+## 2 E     Yes    0.521  0.0315 
+## 3 H     No     0.0829 0.00785
+## 4 H     Yes    0.0390 0.00785
+## 5 M     No     0.0855 0.0114 
+## 6 M     Yes    0.0789 0.0114</code></pre>
+</div>
+</div>
+<div id="learning-more" class="section level1">
+<h1>Learning More</h1>
+<p>Here are some free resources put together by the community about srvyr:</p>
+<ul>
+<li><strong>“How-to”s &amp; examples of using srvyr</strong>
+<ul>
+<li>Stephanie Zimmer &amp; Rebecca Powell’s <a href="https://github.com/szimmer/tidy-survey-aapor-2021">2021 AAPOR Workshop “Tidy Survey Analysis in R using the srvyr Package”</a></li>
+<li>“The Epidemiologist R Handbook”, by Neale Batra et al. has a <a href="https://epirhandbook.com/survey-analysis.html">chapter on survey analysis</a> with srvyr and survey package examples</li>
+<li>Kieran Healy’s book <a href="https://socviz.co/modeling.html#plots-from-complex-surveys">“Data Visualization: A Practical Introduction”</a> has a section on using srvyr to visualize the ESS.</li>
+<li>The IPUMS PMA team’s blog had a series showing examples of using the <a href="https://ipums.github.io/pma-data-hub/index.html#category:COVID-19">PMA COVID survey panel with weights</a></li>
+<li><a href="https://www.opencasestudies.org/ocs-bp-vaping-case-study/">“Open Case Studies: Vaping Behaviors in American Youth”</a> by Carrie Wright, Michael Ontiveros, Leah Jager, Margaret Taub, and Stephanie Hicks is a detailed case study that includes using srvyr to analyze the National Youth Tobacco Survey.</li>
+<li><a href="https://towardsdatascience.com/how-to-plot-likert-scales-with-a-weighted-survey-in-a-dplyr-friendly-way-68df600881a">“How to plot Likert scales with a weighted survey in a dplyr friendly way”</a> by Francisco Suárez Salas</li>
+<li>The tidycensus package vignette <a href="https://walker-data.com/tidycensus/articles/pums-data.html">“Working with Census microdata”</a> includes information about using the weights from the ACS retrieved from the census API.</li>
+<li><a href="https://ldaly.github.io/giveinandblogit/">“The Joy of Calculating the Direct Standard Error for PUMS Estimates”</a> by GitHub user <span class="citation">@ldaly</span></li>
+</ul></li>
+<li><strong>About survey statistics</strong>
+<ul>
+<li>Thomas Lumley’s book <a href="http://r-survey.r-forge.r-project.org/svybook/">“Complex Surveys: a guide to analysis using R”</a></li>
+<li><a href="https://projecteuclid.org/accountAjax/Download?downloadType=journal%20article&amp;urlId=10.1214%2F17-STS614&amp;isResultClick=True">Chris Skinner. Jon Wakefield. “Introduction to the Design and Analysis of Complex Survey Data.” Statist. Sci. 32 (2) 165 - 175, May 2017. 10.1214/17-STS614</a></li>
+<li>Sharon Lohr’s textbook “Sampling: Design and Analysis”. <a href="https://www.sharonlohr.com/sampling-design-and-analysis-2e">Second</a> or <a href="https://www.sharonlohr.com/sampling-design-and-analysis-3e">Third</a> Editions</li>
+<li>“Survey weighting is a mess” is the opening to Andrew Gelman’s <a href="http://www.stat.columbia.edu/~gelman/research/published/STS226.pdf">“Struggles with Survey Weighting and Regression Modeling”</a></li>
+<li>Anthony Damico’s website <a href="http://asdfree.com">“Analyze Survey Data for Free”</a> has the weight specifications for a wide variety of public use survey datasets.</li>
+</ul></li>
+<li><strong>Working programmatically and/or on multiple columns at once (eg <code>dplyr::across</code> and <code>rlang</code>’s “curly curly” <code>{{}}</code>)</strong>
+<ul>
+<li>dplyr’s included package vignettes <a href="https://dplyr.tidyverse.org/articles/colwise.html">“Column-wise operations”</a> &amp; <a href="https://dplyr.tidyverse.org/articles/programming.html">“Programming with dplyr”</a></li>
+</ul></li>
+<li><strong>Non-English resources</strong>
+<ul>
+<li><em>Em português:</em> <a href="https://djalmapessoa.github.io/adac/">“Análise de Dados Amostrais Complexos”</a> by Djalma Pessoa and Pedro Nascimento Silva</li>
+<li><em>En español:</em> <a href="https://medium.com/tacosdedatos/usando-r-para-sacar-información-de-los-microdatos-del-inegi-b21b6946cf4f">“Usando R para jugar con los microdatos del INEGI”</a> by Claudio Daniel Pacheco Castro</li>
+</ul></li>
+<li><strong>Other cool stuff that uses srvyr</strong>
+<ul>
+<li>A (free) graphical interface allowing exploratory data analysis of survey data without writing code: <a href="https://inzight.nz/">iNZight</a> (and <a href="https://inzight.nz/docs/survey-specification.html">survey data instructions</a>)</li>
+<li><a href="https://avallecam.github.io/serosurvey/">“serosurvey: Serological Survey Analysis For Prevalence Estimation Under Misclassification”</a> by Andree Valle Campos</li>
+<li>Several packages on CRAN depend on srvyr, you can see them by looking at the <a href="https://cran.r-project.org/package=srvyr">reverse Imports/Suggestions on CRAN</a>.</li>
+</ul></li>
+</ul>
+<p><strong>Still need help?</strong></p>
+<p>I think the best way to get help is to form a specific question and ask it in some place like <a href="https://community.rstudio.com">rstudio’s community webiste</a> (known for it’s friendly community) or <a href="https://stackoverflow.com">stackoverflow.com</a> (maybe not known for being quite as friendly, but probably has more people). If you think you’ve found a bug in srvyr’s code, please file an <a href="https://github.com/gergness/srvyr/issues/new">issue on GitHub</a>, but note that I’m not a great resource for helping specific issue, both because I have limited capacity but also because I do not consider myself an expert in the statistical methods behind survey analysis.</p>
+<p><strong>Have something to add?</strong></p>
+<p>These resources were mostly found via vanity searches on twitter &amp; github. If you know of anything I missed, or have written something yourself, <a href="https://github.com/gergness/srvyr/issues/127">please let me know in this GitHub issue</a>!</p>
 </div>
 
 

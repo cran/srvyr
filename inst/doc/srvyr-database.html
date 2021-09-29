@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2021-03-28" />
+<meta name="date" content="2021-09-28" />
 
 <title>Databases in srvyr</title>
 
@@ -28,7 +28,14 @@
     </style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -133,7 +140,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2021-03-28</h4>
+<h4 class="date">2021-09-28</h4>
 
 
 
@@ -175,9 +182,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>acs_m <span class="sc">%&gt;%</span> </span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sex) <span class="sc">%&gt;%</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
-<pre><code>## # A tibble: 2 x 2
+<pre><code>## # A tibble: 2 × 2
 ##     sex hicov
-## * &lt;int&gt; &lt;dbl&gt;
+##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1  1.14
 ## 2     2  1.10</code></pre>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>acs_m_db <span class="sc">%&gt;%</span> </span>
@@ -187,7 +194,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## Use `mean(x, na.rm = TRUE)` to silence this warning
 ## This warning is displayed only once per session.</code></pre>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.34.1 [:memory:]
+## # Database: sqlite 3.36.0 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1  1.14
@@ -201,9 +208,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>acs_m <span class="sc">%&gt;%</span> </span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sex) <span class="sc">%&gt;%</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov <span class="sc">==</span> <span class="dv">1</span>))</span></code></pre></div>
-<pre><code>## # A tibble: 2 x 2
+<pre><code>## # A tibble: 2 × 2
 ##     sex hicov
-## * &lt;int&gt; &lt;dbl&gt;
+##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1 0.858
 ## 2     2 0.895</code></pre>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Works in RSQlite, but didn&#39;t in the now defunct MonetDB</span></span>
@@ -221,7 +228,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hicov =</span> <span class="fu">ifelse</span>(hicov <span class="sc">==</span> <span class="dv">1</span>, 1L, 0L)) <span class="sc">%&gt;%</span></span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.34.1 [:memory:]
+## # Database: sqlite 3.36.0 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1 0.858
@@ -231,9 +238,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>acs_m <span class="sc">%&gt;%</span> </span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">agecat =</span> <span class="fu">cut</span>(agep, <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">19</span>, <span class="dv">35</span>, <span class="dv">50</span>, <span class="dv">65</span>, <span class="dv">200</span>))) <span class="sc">%&gt;%</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov <span class="sc">==</span> <span class="dv">1</span>))</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
+<pre><code>## # A tibble: 6 × 2
 ##   agecat   hicov
-## * &lt;fct&gt;    &lt;dbl&gt;
+##   &lt;fct&gt;    &lt;dbl&gt;
 ## 1 (0,19]   0.908
 ## 2 (19,35]  0.795
 ## 3 (35,50]  0.837
@@ -257,7 +264,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(agecat) <span class="sc">%&gt;%</span> </span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.34.1 [:memory:]
+## # Database: sqlite 3.36.0 [:memory:]
 ##   agecat hicov
 ##   &lt;chr&gt;  &lt;dbl&gt;
 ## 1 0-18    1.09
@@ -320,7 +327,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(st) <span class="sc">%&gt;%</span> </span>
 <span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">survey_total</span>(one))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `st`</code></pre>
-<pre><code>## # A tibble: 2 x 3
+<pre><code>## # A tibble: 2 × 3
 ##   st      count count_se
 ##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 02     722718        0
@@ -328,14 +335,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Or the average age of downloaded states</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy <span class="sc">%&gt;%</span></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">agep =</span> <span class="fu">survey_mean</span>(agep, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
-<pre><code>##       agep    agep_se
-## 1 37.35421 0.05315218</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##    agep agep_se
+##   &lt;dbl&gt;   &lt;dbl&gt;
+## 1  37.4  0.0532</code></pre>
 <div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Average age by state</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy <span class="sc">%&gt;%</span></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(st) <span class="sc">%&gt;%</span> </span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">agep =</span> <span class="fu">survey_mean</span>(agep, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `st`</code></pre>
-<pre><code>## # A tibble: 2 x 3
+<pre><code>## # A tibble: 2 × 3
 ##   st     agep agep_se
 ##   &lt;chr&gt; &lt;dbl&gt;   &lt;dbl&gt;
 ## 1 02     34.6  0.133 
@@ -346,7 +355,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(hicov) <span class="sc">%&gt;%</span> </span>
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">survey_mean</span>(<span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `hicov`</code></pre>
-<pre><code>## # A tibble: 2 x 3
+<pre><code>## # A tibble: 2 × 3
 ##   hicov   pct  pct_se
 ##   &lt;chr&gt; &lt;dbl&gt;   &lt;dbl&gt;
 ## 1 1     0.885 0.00339
@@ -357,7 +366,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(st, hicov) <span class="sc">%&gt;%</span> </span>
 <span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">survey_mean</span>(<span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `st`, `hicov`</code></pre>
-<pre><code>## # A tibble: 4 x 4
+<pre><code>## # A tibble: 4 × 4
 ## # Groups:   st [2]
 ##   st    hicov    pct  pct_se
 ##   &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;
@@ -368,8 +377,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 25th, median, and 75th percentile of age of residents of the united states (downloaded states)</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy <span class="sc">%&gt;%</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">agep =</span> <span class="fu">survey_quantile</span>(agep, <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>), <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
-<pre><code>##   agep_q25 agep_q50 agep_q75 agep_q25_se agep_q50_se agep_q75_se
-## 1       19       36       55   0.2511995   0.2511995   0.2511995</code></pre>
+<pre><code>## # A tibble: 1 × 6
+##   agep_q25 agep_q50 agep_q75 agep_q25_se agep_q50_se agep_q75_se
+##      &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;
+## 1       19       36       55       0.251       0.251       0.251</code></pre>
 <div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter works, so we can restrict the acs_m object to females only</span></span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy_female <span class="ot">&lt;-</span> acs_m_db_svy <span class="sc">%&gt;%</span></span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(sex <span class="sc">==</span> <span class="dv">2</span>)</span>
@@ -382,13 +393,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a><span class="co"># average age - nationwide (of downloaded states), restricted to females</span></span>
 <span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy_female <span class="sc">%&gt;%</span></span>
 <span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">agep =</span> <span class="fu">survey_mean</span>(agep, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
-<pre><code>##       agep   agep_se
-## 1 38.17239 0.1032008</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##    agep agep_se
+##   &lt;dbl&gt;   &lt;dbl&gt;
+## 1  38.2   0.103</code></pre>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># median age - nationwide (of downloaded states), restricted to females</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>acs_m_db_svy_female <span class="sc">%&gt;%</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">agep =</span> <span class="fu">survey_median</span>(agep, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
-<pre><code>##   agep   agep_se
-## 1   37 0.2511995</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##    agep agep_se
+##   &lt;dbl&gt;   &lt;dbl&gt;
+## 1    37   0.251</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that though some R functions are translated by dplyr into SQL, not</span></span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="co"># all of them are. For example, when constructing a new age category </span></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="co"># variable in the dataset neither findIntervals nor cut work on databases, </span></span>
@@ -402,7 +417,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(agecat) <span class="sc">%&gt;%</span> </span>
 <span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">pct =</span> <span class="fu">survey_mean</span>(<span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `agecat`</code></pre>
-<pre><code>## # A tibble: 5 x 3
+<pre><code>## # A tibble: 5 × 3
 ##   agecat   pct   pct_se
 ##   &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 0-18   0.248 0.00101 
