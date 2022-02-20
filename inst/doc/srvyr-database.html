@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2021-09-28" />
+<meta name="date" content="2022-02-20" />
 
 <title>Databases in srvyr</title>
 
@@ -140,7 +140,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2021-09-28</h4>
+<h4 class="date">2022-02-20</h4>
 
 
 
@@ -150,7 +150,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>This vignette shows the basics of how to use srvyr with databases. It is based on analysis from the wonderful resource asdfree ( <a href="http://asdfree.com/">website</a> and <a href="https://github.com/ajdamico/asdfree">github</a> ). Many thanks to <a href="https://github.com/ajdamico">ajdamico</a> and collaborators. Specifically, I have adapted code from <a href="https://github.com/ajdamico/asdfree/blob/d0b965e9672161da086e30471760d08281b74343/American%20Community%20Survey/2011%20single-year%20-%20analysis%20examples.R">American Community Survey - 2011 single year analysis</a> and the associated data preparation scripts.</p>
 <div id="database-setup" class="section level2">
 <h2>Database Setup</h2>
-<p>In order to focus on srvyr and databases, we start with a prepared dataset. The full code is available <a href="https://github.com/gergness/srvyr/blob/master/vignettes/save_acs_data.R">on Github</a>, and the high level description of what it does is:</p>
+<p>In order to focus on srvyr and databases, we start with a prepared dataset. The full code is available <a href="https://github.com/gergness/srvyr/blob/main/vignettes/save_acs_data.R">on Github</a>, and the high level description of what it does is:</p>
 <ul>
 <li><p>Download data from acs website (currently only Alaska and Hawaii to save time, though it would be easy to adapt to download to all 50 states and Puerto Rico).</p></li>
 <li><p>Merges the household and person datasets so that we can look at the variables related to each person including those at the household level</p></li>
@@ -167,7 +167,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data (Currently only Alaska and Hawaii to keep file size small and with </span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># limited variables, butcode that downloaded the files is available here</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># https://github.com/gergness/srvyr/blob/master/vignettes/save_acs_data.R</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># https://github.com/gergness/srvyr/blob/main/vignettes/save_acs_data.R</span></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># and could easily be adapted to download all states.)</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">&quot;acs_m.Rdata&quot;</span>) <span class="co"># acs_m data</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
@@ -194,7 +194,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 ## Use `mean(x, na.rm = TRUE)` to silence this warning
 ## This warning is displayed only once per session.</code></pre>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.36.0 [:memory:]
+## # Database: sqlite 3.37.0 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1  1.14
@@ -228,7 +228,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hicov =</span> <span class="fu">ifelse</span>(hicov <span class="sc">==</span> <span class="dv">1</span>, 1L, 0L)) <span class="sc">%&gt;%</span></span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.36.0 [:memory:]
+## # Database: sqlite 3.37.0 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1 0.858
@@ -264,7 +264,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(agecat) <span class="sc">%&gt;%</span> </span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
 <pre><code>## # Source:   lazy query [?? x 2]
-## # Database: sqlite 3.36.0 [:memory:]
+## # Database: sqlite 3.37.0 [:memory:]
 ##   agecat hicov
 ##   &lt;chr&gt;  &lt;dbl&gt;
 ## 1 0-18    1.09

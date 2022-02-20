@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2021-09-28" />
+<meta name="date" content="2022-02-20" />
 
 <title>Extending srvyr</title>
 
@@ -140,7 +140,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Extending srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2021-09-28</h4>
+<h4 class="date">2022-02-20</h4>
 
 
 
@@ -168,6 +168,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <ul>
 <li><code>cur_svy()</code> - This function, modeled after <code>dplyr::current_vars()</code>, is a hidden way to send the survey object to the object (by hidden, I mean that the user doesn’t have to specify the survey in the arguments of their function call). To use it, you can now directly call <code>cur_svy()</code> from inside your function. This survey includes only the current group’s survey data.</li>
 <li><code>cur_svy_full()</code> - Like <code>cur_svy()</code>, but includes the full survey data intead of just the current group’s data.</li>
+<li><code>cur_svy_wts()</code> - This helper function provides access to the full-sample weights for the current group’s data.</li>
 <li><code>set_survey_vars()</code> - Many survey functions have limited support for both supplying a formula indicating the variables to calculate a statistic on as well as a vector. However, oftentimes the vector version is less well supported than the formula version. Since srvyr uses dplyr semantics, it ends up returning the values as vectors. This function will add on the variable to the survey, defaulting to having the name “__SRVYR_TEMP_VAR__”.</li>
 <li><code>get_var_est()</code> - A helper function that calculates variance estimates like standard error (se), confidence interval (ci), variance (var), or coefficient of variance (cv). For functions that support it, there is a separate argument for design effects (to match survey’s conventions).</li>
 <li><code>as_srvyr_result_df()</code> - A helper function that adds the <code>srvyr_result_df</code> class to a <code>data.frame</code></li>
@@ -230,28 +231,31 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="fu">svygini</span>(<span class="sc">~</span>eqincome, <span class="at">design =</span> des_eusilc)</span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             gini     SE</span></span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; eqincome 0.26497 0.0019</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Use new function from summarize</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>srvyr_eusilc <span class="sc">%&gt;%</span> </span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">eqincome =</span> <span class="fu">survey_gini</span>(eqincome))</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 2</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   eqincome eqincome_se</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1    0.265     0.00195</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="do">## Groups</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate by groups for survey</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>survey<span class="sc">::</span><span class="fu">svyby</span>(<span class="sc">~</span>eqincome, <span class="sc">~</span>rb090, des_eusilc, convey<span class="sc">::</span>svygini)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         rb090  eqincome          se</span></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; male     male 0.2578983 0.002617279</span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; female female 0.2702080 0.002892713</span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Use new function from summarize</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>srvyr_eusilc <span class="sc">%&gt;%</span> </span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(rb090) <span class="sc">%&gt;%</span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">eqincome =</span> <span class="fu">survey_gini</span>(eqincome))</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 3</span></span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   rb090  eqincome eqincome_se</span></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;fct&gt;     &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 male      0.258     0.00262</span></span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 female    0.270     0.00289</span></span></code></pre></div>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Use new function from summarize</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>srvyr_eusilc <span class="sc">%&gt;%</span> </span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">eqincome =</span> <span class="fu">survey_gini</span>(eqincome))</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 2</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   eqincome eqincome_se</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1    0.265     0.00195</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="do">## Groups</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate by groups for survey</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>survey<span class="sc">::</span><span class="fu">svyby</span>(<span class="sc">~</span>eqincome, <span class="sc">~</span>rb090, des_eusilc, convey<span class="sc">::</span>svygini)</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         rb090  eqincome          se</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; male     male 0.2578983 0.002617279</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; female female 0.2702080 0.002892713</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Use new function from summarize</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>srvyr_eusilc <span class="sc">%&gt;%</span> </span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(rb090) <span class="sc">%&gt;%</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">eqincome =</span> <span class="fu">survey_gini</span>(eqincome))</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   rb090  eqincome eqincome_se</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   &lt;fct&gt;     &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 male      0.258     0.00262</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 female    0.270     0.00289</span></span></code></pre></div>
 </div>
 
 

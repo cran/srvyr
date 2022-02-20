@@ -1,3 +1,9 @@
+# srvyr 1.1.1
+* Add function `cur_svy_wts()` to access the survey weights (#136, #139, thanks @ray-p144 and @bschneidr)
+* Allow access to survey context functions like `cur_svy()` and `cur_svy_wts()` in `mutate` and `filter` (#138, #139, thanks @ray-p144 and @bschneidr)
+* Improve behavior of `interact()` when using `cascade()`(#133, thanks @szimmer)
+* Fix a bug with non-standard names of grouping variables (like `1234`) in cascade (#132, thanks @szimmer)
+
 # srvyr 1.1.0
 * Uses the new quantile functions provided in version 4.1 of the survey package. The old survey quantile functions can be accessed with `survey_old_quantile()` and `survey_old_median()`
 * Adds a new function `interact` that makes it easier to calculate proportions among interacted groups

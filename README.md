@@ -8,7 +8,7 @@
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/srvyr)](https://CRAN.R-project.org/package=srvyr)
 [![R build
 status](https://github.com/gergness/srvyr/workflows/R-CMD-check/badge.svg)](https://github.com/gergness/srvyr/actions)
-[![codecov](https://codecov.io/gh/gergness/srvyr/branch/master/graph/badge.svg?token=q4DvfEj5Jj)](https://codecov.io/gh/gergness/srvyr)
+[![codecov](https://app.codecov.io/gh/gergness/srvyr/branch/main/graph/badge.svg?token=q4DvfEj5Jj)](https://app.codecov.io/gh/gergness/srvyr)
 [![Documentation via
 pkgdown](tools/pkgdownshield.svg)](http://gdfe.co/srvyr/)
 <!-- badges: end -->
@@ -118,15 +118,14 @@ Here are some free resources put together by the community about srvyr:
         Survey Analysis in R using the srvyr
         Package”](https://github.com/szimmer/tidy-survey-aapor-2021)
     -   “The Epidemiologist R Handbook”, by Neale Batra et al. has a
-        [chapter on survey
-        analysis](https://epirhandbook.com/survey-analysis.html) with
+        [chapter on survey analysis](https://epirhandbook.com/en/) with
         srvyr and survey package examples
     -   Kieran Healy’s book [“Data Visualization: A Practical
         Introduction”](https://socviz.co/modeling.html#plots-from-complex-surveys)
         has a section on using srvyr to visualize the ESS.
     -   The IPUMS PMA team’s blog had a series showing examples of using
         the [PMA COVID survey panel with
-        weights](https://ipums.github.io/pma-data-hub/index.html#category:COVID-19)
+        weights](https://tech.popdata.org/pma-data-hub/index.html)
     -   [“Open Case Studies: Vaping Behaviors in American
         Youth”](https://www.opencasestudies.org/ocs-bp-vaping-case-study/)
         by Carrie Wright, Michael Ontiveros, Leah Jager, Margaret Taub,
@@ -174,6 +173,8 @@ Here are some free resources put together by the community about srvyr:
     -   *En español:* [“Usando R para jugar con los microdatos del
         INEGI”](https://medium.com/tacosdedatos/usando-r-para-sacar-información-de-los-microdatos-del-inegi-b21b6946cf4f)
         by Claudio Daniel Pacheco Castro
+    -   *Tiếng Việt:* [“Dịch tễ học ứng dụng và y tế công cộng với
+        R”](https://epirhandbook.com/vn/survey-analysis.html)
 -   **Other cool stuff that uses srvyr**
     -   A (free) graphical interface allowing exploratory data analysis
         of survey data without writing code:
@@ -191,7 +192,7 @@ Here are some free resources put together by the community about srvyr:
 
 I think the best way to get help is to form a specific question and ask
 it in some place like [rstudio’s community
-webiste](https://community.rstudio.com) (known for it’s friendly
+website](https://community.rstudio.com) (known for it’s friendly
 community) or [stackoverflow.com](https://stackoverflow.com) (maybe not
 known for being quite as friendly, but probably has more people). If you
 think you’ve found a bug in srvyr’s code, please file an [issue on
