@@ -1,3 +1,6 @@
+# srvyr 1.1.2
+* Fix for upcoming version of tidyselect (#147, thanks @hadley)
+
 # srvyr 1.1.1
 * Add function `cur_svy_wts()` to access the survey weights (#136, #139, thanks @ray-p144 and @bschneidr)
 * Allow access to survey context functions like `cur_svy()` and `cur_svy_wts()` in `mutate` and `filter` (#138, #139, thanks @ray-p144 and @bschneidr)

@@ -73,6 +73,7 @@ uninteract.srvyr_interaction <- function(x) {
 
 #' @export
 #' @rdname uninteract
+#' @importFrom tidyselect all_of
 uninteract.data.frame <- function(x) {
   # Helper to expand out varnames in correct order
   interaction_varname_expander <- function(vnames, x) {
@@ -93,9 +94,9 @@ uninteract.data.frame <- function(x) {
 
   interaction_vars <- names(x)[vapply(x, is.interaction, logical(1))]
   out <- dplyr::ungroup(x)
-  out <- dplyr::mutate(out, dplyr::across(interaction_vars, uninteract))
+  out <- dplyr::mutate(out, dplyr::across(all_of(interaction_vars), uninteract))
   # minimal repair so we don't choke on duplicates (which are taken care of by select)
-  out <- tidyr::unpack(out, interaction_vars, names_repair = "minimal")
+  out <- tidyr::unpack(out, all_of(interaction_vars), names_repair = "minimal")
   dup_names <- duplicated(names(out))
   if (any(dup_names)) {
     warning(paste0(
@@ -131,7 +132,7 @@ recast_interact <- function(col, ...) {
   .dots <- rlang::quos(...)
   old_crosswalk <- crosswalk(col)
 
-  conversion <- dplyr::select(old_crosswalk, !!!.dots, "old_cw" = .data$`___srvyr_cw_id`)
+  conversion <- dplyr::select(old_crosswalk, !!!.dots, "old_cw" = dplyr::one_of("___srvyr_cw_id"))
   conversion <- dplyr::group_by(conversion, !!!.dots)
   conversion[["___srvyr_cw_id"]] <- group_indices(conversion)
   conversion <- ungroup(conversion)
@@ -193,7 +194,7 @@ vec_ptype2.srvyr_interaction.srvyr_interaction <- function(x, y, ..., x_arg = ""
     x_cw[cw_names],
     dplyr::anti_join(y_cw[cw_names], x_cw[cw_names], by = cw_names)
   )
-  out_cw <- dplyr::arrange(out_cw, dplyr::across(cw_names))
+  out_cw <- dplyr::arrange(out_cw, dplyr::across(all_of(cw_names)))
   out_cw[["___srvyr_cw_id"]] <- seq_len(nrow(out_cw))
 
   new_interaction(crosswalk = out_cw)
