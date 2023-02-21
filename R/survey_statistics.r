@@ -1,12 +1,14 @@
 #' Calculate mean/proportion and its variation using survey methods
 #'
-#' Calculate means and proportions from complex survey data. A wrapper
-#' around \code{\link[survey]{svymean}}, or if \code{proportion = TRUE},
-#' \code{\link[survey]{svyciprop}}. \code{survey_mean} should always be
-#' called from \code{\link{summarise}}.
+#' Calculate means and proportions from complex survey data.
+#' \code{survey_mean} with \code{proportion = FALSE} (the default) or \code{survey_prop} with \code{proportion = FALSE}
+#' is a wrapper around \code{\link[survey]{svymean}}.
+#' \code{survey_prop} with \code{proportion = TRUE} (the default) or \code{survey_mean} with \code{proportion = TRUE}
+#' is a wrapper around \code{\link[survey]{svyciprop}}.
+#' \code{survey_mean} and \code{survey_prop} should always be called from \code{\link{summarise}}.
 #'
 #' Using \code{survey_prop} is equivalent to leaving out the \code{x} argument in
-#' \code{survey_mean} and this calculates the proportion represented within the
+#' \code{survey_mean} and setting \code{proportion = TRUE} and this calculates the proportion represented within the
 #' data, with the last grouping variable "unpeeled". \code{\link{interact}}
 #' allows for "unpeeling" multiple variables at once.
 #'
@@ -93,7 +95,7 @@ survey_mean <- function(
   vartype = c("se", "ci", "var", "cv"),
   level = 0.95,
   proportion = FALSE,
-  prop_method = c("logit", "likelihood", "asin", "beta", "mean"),
+  prop_method = c("logit", "likelihood", "asin", "beta", "mean", "xlogit"),
   deff = FALSE,
   df = NULL,
   ...
@@ -105,9 +107,11 @@ survey_mean <- function(
   }
   prop_method <- match.arg(prop_method)
   if (is.null(df)) df <- survey::degf(cur_svy_full())
-  if (missing(x)) return(survey_prop(vartype = vartype, level = level,
-                                     proportion = proportion, prop_method = prop_method,
-                                     deff = deff, df = df, .svy = cur_svy()))
+  if (missing(x)){
+    return(survey_prop(vartype = vartype, level = level,
+                       proportion = proportion, prop_method = prop_method,
+                       deff = deff, df = df, .svy = cur_svy()))
+  }
   stop_for_factor(x)
   if (!proportion) {
     if (is.logical(x)) x <- as.integer(x)
@@ -132,14 +136,24 @@ survey_mean <- function(
 survey_prop <- function(
   vartype = c("se", "ci", "var", "cv"),
   level = 0.95,
-  proportion = FALSE,
-  prop_method = c("logit", "likelihood", "asin", "beta", "mean"),
+  proportion = TRUE,
+  prop_method = c("logit", "likelihood", "asin", "beta", "mean", "xlogit"),
   deff = FALSE,
   df = NULL,
   ...
 ) {
   .svy <- cur_svy()
   .full_svy <- cur_svy_full()
+
+  if (missing(proportion) & ("ci" %in% vartype)){
+    inform(
+      c(
+        "When `proportion` is unspecified, `survey_prop()` now defaults to `proportion = TRUE`.",
+        i = "This should improve confidence interval coverage."
+      ),
+      .frequency = "once", .frequency_id="spd"
+    )
+  }
 
   if (!is.null(vartype)) {
     vartype <- if (missing(vartype)) "se" else match.arg(vartype, several.ok = TRUE)
@@ -756,14 +770,113 @@ unweighted <- function(...) {
 
   dots <- rlang::enquos(...)
 
+  # --- Use reframe because it works when caller is summarise & reframe
   if (is.calibrated(.svy) | is.pps(.svy)) {
     excluded_rows <- is.infinite(.svy[['prob']])
-    out <- summarize(.svy[["variables"]][!excluded_rows,], !!!dots)
+    out <- reframe(.svy[["variables"]][!excluded_rows,], !!!dots)
   } else {
-    out <- summarize(.svy[["variables"]], !!!dots)
+    out <- reframe(.svy[["variables"]], !!!dots)
   }
 
   # don't use default dplyr names for dots (but if explicitly named then do)
   names(out) <- ifelse(names(dots) == "", "", names(out))
   as_srvyr_result_df(out)
+}
+
+
+#' Calculate correlation and its variation using survey methods
+#'
+#' Calculate correlation from complex survey data. A wrapper
+#' around \code{\link[survey]{svyvar}}. \code{survey_corr} should always be
+#' called from \code{\link{summarise}}. Note this is Pearson's correlation.
+#'
+#' @param x A variable or expression
+#' @param y A variable or expression
+#' @param na.rm A logical value to indicate whether missing values should be dropped
+#' @param vartype NULL to report no variability. Otherwise one or more of: standard error ("se", the default), confidence interval ("ci"), variance ("var") or coefficient of variation ("cv").
+#' @param level (For vartype = "ci" only) A single number or vector of numbers indicating the confidence level
+#' @param df 	(For vartype = "ci" only) A numeric value indicating the degrees of freedom for t-distribution. The default (NULL) uses degf, but Inf is the usual survey package's default
+#' @param ... Ignored
+#' @examples
+#' data('api', package = 'survey')
+#'
+#' apisrs %>%
+#'   as_survey_design(.ids = 1) %>%
+#'   summarize(api_corr = survey_corr(x = api00, y = api99))
+#'
+#' apisrs %>%
+#'   as_survey_design(.ids = 1) %>%
+#'   group_by(sch.wide) %>%
+#'   summarize(
+#'     api_emer_corr = survey_corr(x = api00, y = emer, na.rm=TRUE, vartype="ci")
+#'   )
+#' @export
+survey_corr <- function(
+    x, y, na.rm = FALSE, vartype = c("se", "ci", "var", "cv"), level=0.95, df=NULL, ...
+) {
+  if (!is.null(vartype)) {
+    vartype <- if (missing(vartype)) "se" else match.arg(vartype, several.ok = TRUE)
+  }
+
+
+  # Add the necessary variables to the survey design
+  .svy <- srvyr::set_survey_vars(srvyr::cur_svy(), x,
+                                 name = "__SRVYR_TEMP_VAR_X__")
+  .svy <- srvyr::set_survey_vars(.svy, y,
+                                 name = "__SRVYR_TEMP_VAR_Y__",
+                                 add = TRUE)
+
+  # Set up df
+  if (is.null(df)) df <- survey::degf(.svy)
+
+  # Get point estimates for population variances and covariance
+  if (inherits(.svy, 'svyrep.design')) {
+    var_est <- survey::svyvar(
+      x = ~ `__SRVYR_TEMP_VAR_X__` + `__SRVYR_TEMP_VAR_Y__`,
+      na.rm = na.rm, design = .svy, return.replicates = TRUE)
+  } else {
+    var_est <- survey::svyvar(
+      x = ~ `__SRVYR_TEMP_VAR_X__` + `__SRVYR_TEMP_VAR_Y__`,
+      na.rm = na.rm, design = .svy)
+  }
+
+  # Turn matrix of point estimates into a vector
+  # (and deduplicate)
+  point_estimates <- as.vector(stats::coef(var_est)[c(1,2,4)])
+  names(point_estimates) <- c('var_x', 'cov_xy', 'var_y')
+  # Obtain sampling variance-covariance matrix of the point estimates
+  vcov_mat <- stats::vcov(var_est)[c(1,2,4), c(1,2,4)]
+  rownames(vcov_mat) <- names(point_estimates)
+  colnames(vcov_mat) <- names(point_estimates)
+  class(point_estimates) <- "svystat"
+  attr(point_estimates, 'var') <- vcov_mat
+  attr(point_estimates, 'statistic') <- "covariances"
+
+  # Wrap it up into a 'svystat' object
+  if (inherits(.svy, 'svyrep.design')) {
+    svstat <- list(
+      'covariances' = point_estimates,
+      'replicates' = (var_est$replicates[,c(1,2,4)]) |>
+        `colnames<-`(value = names(point_estimates))
+    )
+    attr(svstat$replicates, 'scale') <- attr(var_est$replicates, 'scale')
+    attr(svstat$replicates, 'rscales') <- attr(var_est$replicates, 'rscales')
+    attr(svstat$replicates, 'mse') <- attr(var_est$replicates, 'mse')
+    class(svstat) <- "svrepstat"
+  } else {
+    svstat <- point_estimates
+  }
+
+
+  # Estimate correlation and use Delta Method to obtain standard error
+  out <- survey::svycontrast(
+    stat = svstat, contrasts = list(
+      'corr' = quote(
+        cov_xy / sqrt(var_x * var_y)
+      )
+    ))
+
+  # Wrap up into a 'srvyr' object
+  out <- srvyr::get_var_est(out, vartype, df=df, level=level)
+  srvyr::as_srvyr_result_df(out)
 }

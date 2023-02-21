@@ -1,3 +1,11 @@
+# srvyr 1.2.0
+* `survey_prop()` now uses proportions as the default, which should confidence interval improve coverage, but does mean results may slightly change (#141, #142, thanks @szimmer)
+* New function `survey_corr()` calculates the correlation between 2 variables, (#150, #151, thanks @szimmer & @bschneidr)
+* Added method for `dplyr::reframe` for srvyr's objects
+* The function `as_survey_rep()` now accepts `type="ACS"` and `type="successive-difference"`
+for user-supplied replicate weights. (#153, thanks @bschneidr)
+* Squashed some deprecation warnings introduced by dplyr 1.1.0 (which is now the minimum version)
+
 # srvyr 1.1.2
 * Fix for upcoming version of tidyselect (#147, thanks @hadley)
 
@@ -22,7 +30,7 @@
   * main user facing improvements are:
     * `dplyr::across()` now works within it
     * dplyr functions like `dplyr::cur_group()`, `dplyr::cur_group_id()`, `dplyr::cur_data()`
-    work in it (as well as new anlagous functions srvyr-specific `cur_svy()` and 
+    work in it (as well as new analogous functions srvyr-specific `cur_svy()` and 
     `cur_svy_full()`)
   * The only known breaking change is:
     * objects in the `summarize` will refer to the output of `summarize` before the input.

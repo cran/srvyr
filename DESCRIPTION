@@ -4,8 +4,8 @@ Title: 'dplyr'-Like Syntax for Summary Statistics of Survey Data
 Description: Use piping, verbs like 'group_by' and 'summarize', and other
     'dplyr' inspired syntactic style when calculating summary statistics on survey
     data using functions from the 'survey' package.
-Version: 1.1.2
-Date: 2022-10-04
+Version: 1.2.0
+Date: 2023-02-20
 Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com", role = c("aut", "cre")),
   person("Thomas", "Lumley", role = "ctb"),
   person("Tomasz", "\u017b\u00F3\u0142tak", role = "ctb"),
@@ -14,16 +14,18 @@ Authors@R: c(person("Greg", "Freedman Ellis", email = "greg.freedman@gmail.com",
 URL: http://gdfe.co/srvyr/, https://github.com/gergness/srvyr/
 BugReports: https://github.com/gergness/srvyr/issues
 Depends: R (>= 3.1.2)
-Imports: dplyr (>= 1.0), magrittr, methods, rlang, survey (>= 4.1),
+Imports: dplyr (>= 1.1.0), magrittr, methods, rlang, survey (>= 4.1),
         tibble, tidyr, tidyselect, vctrs (>= 0.3.0)
 License: GPL-2 | GPL-3
-Suggests: convey, DBI, dbplyr, ggplot2, knitr, laeken, Matrix,
-        rmarkdown (>= 2.2.2), pander, RSQLite, survival, testthat
+Suggests: spelling, convey, DBI, dbplyr, ggplot2, knitr, laeken,
+        Matrix, rmarkdown (>= 2.2.2), pander, RSQLite, survival,
+        testthat, covr
 Encoding: UTF-8
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
+Language: en-US
 NeedsCompilation: no
-Packaged: 2022-10-05 21:13:53 UTC; gregfreedmanellis
+Packaged: 2023-02-21 03:02:13 UTC; gregfreedmanellis
 Author: Greg Freedman Ellis [aut, cre],
   Thomas Lumley [ctb],
   Tomasz Żółtak [ctb],
@@ -31,4 +33,4 @@ Author: Greg Freedman Ellis [aut, cre],
   Pavel N. Krivitsky [ctb]
 Maintainer: Greg Freedman Ellis <greg.freedman@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-10-05 23:00:06 UTC
+Date/Publication: 2023-02-21 04:10:02 UTC

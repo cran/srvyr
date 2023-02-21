@@ -27,7 +27,9 @@
 #' weights have been averaged, gives the number of iterations averaged over.
 #' @param scale,rscales Scaling constant for variance, see
 #' \code{\link[survey]{svrepdesign}} for more information.
-#' @param fpc,fpctype Finite population correction information
+#' @param fpc 	Variables specifying a finite population correction, see
+#' \code{\link[survey]{svrepdesign}} for more details.
+#' @param fpctype Finite population correction information
 #' @param mse if \code{TRUE}, compute variances based on sum of squares
 #' around the point estimate, rather than the mean of the replicates
 #' @param ... ignored
@@ -67,6 +69,7 @@ as_survey_rep <- function(.data, ...) {
 as_survey_rep.data.frame <-
   function(.data, variables = NULL, repweights = NULL, weights = NULL,
            type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
+                    "successive-difference", "ACS",
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
@@ -75,13 +78,14 @@ as_survey_rep.data.frame <-
     repweights <- srvyr_select_vars(rlang::enquo(repweights), .data)
     weights <- srvyr_select_vars(rlang::enquo(weights), .data)
     fpc <- srvyr_select_vars(rlang::enquo(fpc), .data)
+    type <- if (missing(type)) type[1] else type
 
     out <- survey::svrepdesign(
       variables = variables,
       repweights = repweights,
       weights = weights,
       data = .data,
-      type = match.arg(type),
+      type = type,
       combined.weights = combined_weights,
       rho = rho,
       bootstrap.average = bootstrap_average,
@@ -104,6 +108,7 @@ as_survey_rep.data.frame <-
 as_survey_rep.tbl_lazy <-
   function(.data, variables = NULL, repweights = NULL, weights = NULL,
            type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
+                    "successive-difference", "ACS",
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
@@ -122,13 +127,14 @@ as_survey_rep.tbl_lazy <-
     repweights <- srvyr_select_vars(repweights, .data)
     weights <- srvyr_select_vars(weights, .data)
     fpc <- srvyr_select_vars(fpc, .data)
+    type <- if (missing(type)) type[1] else type
 
     out <- survey::svrepdesign(
       variables = variables,
       repweights = repweights,
       weights = weights,
       data = survey_vars_local,
-      type = match.arg(type),
+      type = type,
       combined.weights = combined_weights,
       rho = rho,
       bootstrap.average = bootstrap_average,
@@ -192,14 +198,17 @@ as_survey_rep.tbl_svy <-
 #' @export
 #' @rdname srvyr-se-deprecated
 #' @inheritParams as_survey_rep
+#' @param fpctype Finite population correction information
 as_survey_rep_ <-
   function(.data, variables = NULL, repweights = NULL, weights = NULL,
            type = c("BRR", "Fay", "JK1", "JKn", "bootstrap",
+                    "successive-difference", "ACS",
                     "other"), combined_weights = TRUE,
            rho = NULL, bootstrap_average = NULL, scale = NULL,
            rscales = NULL, fpc = NULL, fpctype = c("fraction", "correction"),
            mse = getOption("survey.replicates.mse")) {
 
+    type <- if (missing(type)) type[1] else type
     as_survey_rep(
       .data,
       variables = !!n_compat_lazy(variables),

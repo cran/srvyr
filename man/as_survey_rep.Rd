@@ -16,7 +16,8 @@ as_survey_rep(.data, ...)
   variables = NULL,
   repweights = NULL,
   weights = NULL,
-  type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "other"),
+  type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "successive-difference", "ACS",
+    "other"),
   combined_weights = TRUE,
   rho = NULL,
   bootstrap_average = NULL,
@@ -33,7 +34,8 @@ as_survey_rep(.data, ...)
   variables = NULL,
   repweights = NULL,
   weights = NULL,
-  type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "other"),
+  type = c("BRR", "Fay", "JK1", "JKn", "bootstrap", "successive-difference", "ACS",
+    "other"),
   combined_weights = TRUE,
   rho = NULL,
   bootstrap_average = NULL,
@@ -95,7 +97,10 @@ weights have been averaged, gives the number of iterations averaged over.}
 \item{scale, rscales}{Scaling constant for variance, see
 \code{\link[survey]{svrepdesign}} for more information.}
 
-\item{fpc, fpctype}{Finite population correction information}
+\item{fpc}{Variables specifying a finite population correction, see
+\code{\link[survey]{svrepdesign}} for more details.}
+
+\item{fpctype}{Finite population correction information}
 
 \item{mse}{if \code{TRUE}, compute variances based on sum of squares
 around the point estimate, rather than the mean of the replicates}
