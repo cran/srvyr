@@ -1,3 +1,16 @@
+# srvyr 1.3.0
+* `as_survey_rep()` now has an argument `degf`, corresponding to the same argument in the survey function `svrepdesign()`. This argument can be useful for large data sets, since specifying a value for `degf` avoids a calculation which can be slow for very large data sets, (#171, @bschneidr).
+* Speed improvements for summarize when there are many groups (#168, thanks @etiennebacher)
+* Improvements to printing (#166, thanks @szimmer)
+* Fix for situations where filtering a calibrated/PPS survey design when filtering 0 rows (#159, @bschneidr)
+* Fix for anonymous functions in `rename_with()` (#172, thanks @josiahg2)
+* Fix for chaining filter & group_by in database backed surveys (#173, thanks @jamgreen)
+* Fix for comma separated filters in database backed surveys (#173, thanks @jamgreen)
+* Fix for survey_prop when 0 observations are found in a group (#156, thanks @yannsay-impact)
+* groups are now preserved when `as_survey` and related functions are called on a grouped_df (#178, thanks @rossellhayes).
+* Fix so that `.by` argument works like it does for dplyr in `summarize` and `mutate` (#179, thanks @szimmer)
+* mutate now by default unpacks srvyr summary statistics like `survey_mean()` instead of leaving them packed
+
 # srvyr 1.2.0
 * `survey_prop()` now uses proportions as the default, which should confidence interval improve coverage, but does mean results may slightly change (#141, #142, thanks @szimmer)
 * New function `survey_corr()` calculates the correlation between 2 variables, (#150, #151, thanks @szimmer & @bschneidr)

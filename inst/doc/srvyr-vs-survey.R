@@ -1,4 +1,4 @@
-## ---- message = FALSE, fig.width = 6------------------------------------------
+## ----message = FALSE, fig.width = 6-------------------------------------------
 library(survey)
 library(ggplot2)
 library(dplyr)
@@ -16,7 +16,7 @@ ggplot(data = out, aes(x = stype, y = api_diff, group = hs_grad_pct, fill = hs_g
   geom_col(stat = "identity", position = "dodge") +
   geom_text(aes(y = 0, label = n), position = position_dodge(width = 0.9), vjust = -1)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 library(srvyr)
 
 # simple random sample
@@ -24,7 +24,7 @@ srs_design_srvyr <- apisrs %>% as_survey_design(ids = 1, fpc = fpc)
 
 srs_design_survey <- svydesign(ids = ~1, fpc = ~fpc, data = apisrs)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # selecting variables to keep in the survey object (stratified example)
 strat_design_srvyr <- apistrat %>%
   as_survey_design(1, strata = stype, fpc = fpc, weight = pw,
@@ -34,11 +34,11 @@ strat_design_survey <- svydesign(~1, strata = ~stype, fpc = ~fpc,
                                  variables = ~stype + api99 + api00 + api.stu,
                                  weight = ~pw, data = apistrat)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # simple random sample (again)
 srs_design_srvyr2 <- apisrs %>% as_survey(ids = 1, fpc = fpc)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 strat_design_srvyr <- strat_design_srvyr %>%
   mutate(api_diff = api00 - api99) %>%
   rename(api_students = api.stu)
@@ -47,7 +47,7 @@ strat_design_survey$variables$api_diff <- strat_design_survey$variables$api00 -
   strat_design_survey$variables$api99
 names(strat_design_survey$variables)[names(strat_design_survey$variables) == "api.stu"] <- "api_students"
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Using srvyr
 out <- strat_design_srvyr %>%
   summarize(api_diff = survey_mean(api_diff, vartype = "ci"))
@@ -60,7 +60,7 @@ out <- svymean(~api_diff, strat_design_survey)
 out
 confint(out)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Using srvyr
 strat_design_srvyr %>%
   group_by(stype) %>%
@@ -70,7 +70,7 @@ strat_design_srvyr %>%
 # Using survey
 svyby(~api_diff >= 0, ~stype, strat_design_survey, svytotal)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Using srvyr
 srs_design_srvyr %>%
   group_by(awards) %>%
@@ -81,7 +81,7 @@ srs_design_srvyr %>%
 svymean(~awards, srs_design_survey)
 svytotal(~awards, srs_design_survey)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Using srvyr
 strat_design_srvyr %>%
   group_by(stype) %>%
@@ -90,7 +90,7 @@ strat_design_srvyr %>%
 # Using survey
 svyby(~api99, ~stype, strat_design_survey, unwtd.count)
 
-## ---- message = FALSE, fig.width = 6------------------------------------------
+## ----message = FALSE, fig.width = 6-------------------------------------------
 strat_design <- apistrat %>%
   as_survey_design(strata = stype, fpc = fpc, weight  = pw)
 
@@ -133,32 +133,32 @@ confint(estimate, df = degf(strat_design))
 # reset significant figures
 options("pillar.sigfig" = old_sigfig)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 glm <- svyglm(api00 ~ ell + meals + mobility, design = strat_design)
 summary(glm)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 strat_design %>%
   summarize(prop_api99_over_700 = survey_mean(api99 > 700))
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 strat_design %>%
   group_by(awards) %>%
   summarize(percentage = 100 * survey_mean())
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 strat_design %>%
   group_by(api99_above_700 = api99 > 700) %>%
   summarize(api00_mn = survey_mean(api00))
 
-## ---- message = FALSE, eval=FALSE---------------------------------------------
+## ----message = FALSE, eval=FALSE----------------------------------------------
 #  # BAD DON'T DO THIS!
 #  strat_design %>%
 #    group_by(awards) %>%
 #    summarize(percentage = 100 * survey_mean(vartype = "var"))
 #  # VARIANCE IS WRONG
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 mean_with_ci <- function(.data, var) {
   summarize(.data, mean = survey_mean({{var}}, vartype = "ci"))
 }

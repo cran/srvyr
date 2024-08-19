@@ -31,7 +31,7 @@ databases, but in theory other database backends should work as well.
 
 This vignette shows the basics of how to use srvyr with databases. 
 It is based on analysis from the wonderful resource asdfree 
-( [website](http://asdfree.com/) and [github](https://github.com/ajdamico/asdfree) ). 
+( [website](https://asdfree.com/) and [github](https://github.com/ajdamico/asdfree) ). 
 Many thanks to [ajdamico](https://github.com/ajdamico) and collaborators. 
 Specifically, I have adapted code from [American Community Survey - 2011 single year analysis](https://github.com/ajdamico/asdfree/blob/d0b965e9672161da086e30471760d08281b74343/American%20Community%20Survey/2011%20single-year%20-%20analysis%20examples.R) and the associated data preparation scripts. 
 
@@ -186,6 +186,8 @@ it will save a lot space.
 ```{r}
 object.size(acs_m_db_svy)
 ```
+
+For very large survey data sets with replicate weights, it is strongly recommended to specify a value in the `degf` parameter of `as_survey_rep()`: otherwise, the survey package will attempt to automatically determine the design degrees of freedom using a process that can be very slow for large data sets. The value to use for `degf` will often be specified in survey data documentation, but a common rule of thumb is the number of columns of replicate weights.
 
 # Analysis # 
 

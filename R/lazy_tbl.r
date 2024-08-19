@@ -32,10 +32,15 @@ lazy_subset_svy_vars <- function(svy, ..., .preserve = FALSE) {
     svy$variables <- dplyr::mutate(svy$variables, `__SRVYR_SUBSET_VAR__` = TRUE)
   }
 
-  svy$variables <- dplyr::mutate(
-    svy$variables,
-    `__SRVYR_SUBSET_VAR__` = !!!dots & !!rlang::sym("__SRVYR_SUBSET_VAR__")
-  )
+
+  # Maybe there's a way to combine quosures, but struggling with it
+  # So just do multiple passes
+  svy$variables <- Reduce(x = dots, init = svy$variables, function(vars, dot) {
+    dplyr::mutate(
+      vars,
+      `__SRVYR_SUBSET_VAR__` = !!dot & !!rlang::sym("__SRVYR_SUBSET_VAR__")
+    )
+  })
 
   svy
 }
@@ -61,8 +66,9 @@ localize_lazy_svy <- function(svy, dots = NULL) {
     dplyr::select(svy$variables, !!!rlang::syms(vars_to_collect))
   )
 
+  class(svy) <- setdiff(class(svy), "tbl_lazy_svy")
   if (needs_subset) {
-    svy <- subset_svy_vars(svy, as.logical(svy$variables$`__SRVYR_SUBSET_VAR__`))
+    svy <- srvyr::filter(svy, as.logical(.data[["__SRVYR_SUBSET_VAR__"]]))
   }
   svy
 }
@@ -78,10 +84,10 @@ find_vars_to_collect_in_dots <- function(data, dots) {
   # All dots must be a function for srvyr summarize, so we can
   # go down to each dot's expression arguments
   all_args <- lapply(dots, function(x) rlang::call_args(x))
-  all_args <- rlang::squash(unname(all_args))
+  all_args <- unlist(unname(all_args))
 
   used_vars <- lapply(all_args, find_vars_to_collect, var_names = dplyr::tbl_vars(data))
-  used_vars <- rlang::flatten_chr(used_vars)
+  used_vars <- unlist(used_vars)
   unique(used_vars)
 }
 

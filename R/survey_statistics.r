@@ -13,7 +13,8 @@
 #' allows for "unpeeling" multiple variables at once.
 #'
 #' @param x A variable or expression, or empty
-#' @param na.rm A logical value to indicate whether missing values should be dropped
+#' @param na.rm A logical value to indicate whether missing values should be dropped.
+#' See the section "Missing Values" later in this help page.
 #' @param vartype Report variability as one or more of: standard error ("se", default),
 #'                confidence interval ("ci"), variance ("var") or coefficient of variation
 #'                ("cv").
@@ -30,6 +31,16 @@
 #'           but Inf is the usual survey package's default (except in
 #'           \code{\link[survey]{svyciprop}}.
 #' @param ... Ignored
+#' @section Missing Values:
+#' When calculating proportions for a grouping variable \code{x}, \code{NA} values
+#' will affect the estimated proportions unless they are first removed by calling
+#' \code{filter(!is.na(x))}.
+#'
+#' When calculating means for a numeric variable, equivalent results are obtained
+#' by calling \code{filter(!is.na(x))} or using \code{survey_mean(x, na.rm = TRUE)}.
+#' However, it is better to use \code{survey_mean(x, na.rm = TRUE)} if
+#' you are simultaneously producing summaries for other variables
+#' that might not have missing values for the same rows as \code{x}.
 #' @examples
 #' data(api, package = "survey")
 #'
@@ -108,6 +119,16 @@ survey_mean <- function(
   prop_method <- match.arg(prop_method)
   if (is.null(df)) df <- survey::degf(cur_svy_full())
   if (missing(x)){
+    if (na.rm) {
+      rlang::warn(
+        "na.rm argument has no effect on survey_mean when calculating grouped proportions. ",
+        i = paste0(
+          "In order to calculate proportions ignoring the missing group, filter the ",
+          "dataset before calling group_by()."
+        ),
+        .frequency = "once", .frequency_id = "srvyr_prop_narm"
+      )
+    }
     return(survey_prop(vartype = vartype, level = level,
                        proportion = proportion, prop_method = prop_method,
                        deff = deff, df = df, .svy = cur_svy()))
@@ -174,6 +195,8 @@ survey_prop <- function(
     # (Not possible to use svyby here, so I think this is as fast as it can be)
     x <- peeled_cur_group_id(.full_svy, cur_group())
     .full_svy <- set_survey_vars(.full_svy, x)
+    # survey package errors when no rows, so return missing results
+    if (nrow(.full_svy$variables) == 0) return(get_empty_var_est(vartype, level = level))
 
     stat <- survey::svyciprop(
       ~`__SRVYR_TEMP_VAR__`, .full_svy, na.rm = TRUE, level = level, method = prop_method
@@ -856,7 +879,7 @@ survey_corr <- function(
   if (inherits(.svy, 'svyrep.design')) {
     svstat <- list(
       'covariances' = point_estimates,
-      'replicates' = (var_est$replicates[,c(1,2,4)]) |>
+      'replicates' = (var_est$replicates[,c(1,2,4)]) %>%
         `colnames<-`(value = names(point_estimates))
     )
     attr(svstat$replicates, 'scale') <- attr(var_est$replicates, 'scale')

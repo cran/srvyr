@@ -17,6 +17,32 @@ test_that('srvyr::pull works like dplyr::pull',{
 
 })
 
+test_that("mutate can handle survey summaries", {
+  summarize_version <- dstrata %>%
+    group_by(awards) %>%
+    summarise(x = survey_mean(api99))
+
+  mutate_version <- dstrata %>%
+    group_by(awards) %>%
+    mutate(x = survey_mean(api99)) %>%
+    as_tibble() %>%
+    select(awards, x, x_se) %>%
+    distinct()
+
+  expect_equal(mutate_version, summarize_version)
+})
+
+test_that("mutate can handle .by", {
+  explicit_group_by <- dstrata %>%
+    group_by(awards) %>%
+    mutate(x = survey_mean(api99))
+
+  .by_arg <- dstrata %>%
+    mutate(x = survey_mean(api99), .by = awards)
+
+  expect_equal(explicit_group_by, .by_arg)
+})
+
 test_that('transmute works',{
   expect_equal(
     dstrata %>% transmute(test = 1),
@@ -34,19 +60,24 @@ test_that('rename works', {
 })
 
 test_that('rename_with works without the .cols= argument', {
-  new_names <- dstrata %>% `[[`("variables") %>% names
-  new_names <- paste0(new_names, ".x")
+  new_names <- dstrata %>% tbl_vars() %>% paste0(".x")
   expect_equal(
-    dstrata %>% rename_with(~paste0(., ".x")) %>% `[[`("variables") %>% names,
+    dstrata %>% rename_with(~paste0(., ".x")) %>% tbl_vars() %>% as.character(),
+    new_names
+  )
+
+  expect_equal(
+    dstrata %>% rename_with(\(x) paste0(x, ".x")) %>% tbl_vars() %>% as.character(),
     new_names
   )
 })
 
 test_that('rename_with works with the .cols= argument', {
-  new_names <- dstrata %>% `[[`("variables") %>% names
-  new_names <- ifelse(endsWith(new_names, "m"), paste0(new_names, ".x"), new_names)
+  new_names <- dstrata %>%
+    tbl_vars %>%
+    {ifelse(endsWith(., "m"), paste0(., ".x"), .) }
   expect_equal(
-    dstrata %>% rename_with(~paste0(., ".x"), ends_with("m")) %>% `[[`("variables") %>% names,
+    dstrata %>% rename_with(~paste0(., ".x"), ends_with("m")) %>% tbl_vars() %>% as.character(),
     new_names
   )
 })
@@ -100,6 +131,16 @@ test_that("summarize `.groups` argument matches dplyr behavior (3 groups case)",
       expected.label = paste0("tbl_df summarize - ", group_type)
     )
   })
+})
+
+test_that("summarize can handle .by argument", {
+  expect_equal(
+      dstrata %>%
+        group_by(awards) %>%
+        summarise(api99 = survey_mean(api99)),
+      dstrata %>%
+        summarise(api99 = survey_mean(api99), .by = awards),
+  )
 })
 
 test_that("ungrouped reframe accepts mix of 1 row & multi row results", {

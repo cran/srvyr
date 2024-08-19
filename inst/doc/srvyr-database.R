@@ -1,4 +1,4 @@
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 if (!require(RSQLite)) {
   message("Could not find RSQLite so could not run vignette.")
   knitr::opts_chunk$set(eval = FALSE)

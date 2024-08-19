@@ -43,7 +43,7 @@ set_survey_vars <- function(
     out$phase1$sample$variables[[name]] <- x
   } else {
     if (!add) {
-      out$variables <- select(out$variables, dplyr::one_of(group_vars(out)))
+      out$variables <- out$variables[, group_vars(out), drop = FALSE]
     }
     out$variables[[name]] <- x
   }
@@ -64,8 +64,6 @@ set_survey_vars <- function(
 #' @param vartype A vector indicating which variance estimates to calculate (options are
 #'   se for standard error, ci for confidence interval, var for variance or cv for
 #'   coefficient of variation). Multiples are allowed.
-#' @param grps A vector indicating the names of the grouping variables for grouped
-#'   surveys ("" indicates no groups).
 #' @param level One or more levels to calculate a confidence interval.
 #' @param df Degrees of freedom, many survey functions default to Inf, but srvyr functions
 #'   generally default to the result of calling degf on the survey object.
@@ -75,7 +73,7 @@ set_survey_vars <- function(
 #' @return a tbl_svy with the variables modified
 #' @export
 get_var_est <- function(
-  stat, vartype, grps = "", level = 0.95, df = Inf, pre_calc_ci = FALSE, deff = FALSE
+  stat, vartype, level = 0.95, df = Inf, pre_calc_ci = FALSE, deff = FALSE
 ) {
   out_width <- 1
   out <- lapply(vartype, function(vvv) {
@@ -83,7 +81,7 @@ get_var_est <- function(
       se <- survey::SE(stat)
       # Needed for grouped quantile
       if (!inherits(se, "data.frame")) {
-        se <- data.frame(matrix(se, ncol = out_width))
+        se <- as.data.frame(se)
       }
       names(se) <- "_se"
       se
@@ -122,13 +120,9 @@ get_var_est <- function(
     }
   })
 
-  coef <- data.frame(matrix(coef(stat), ncol = out_width))
+  coef <- as.data.frame(unclass(coef(stat)))
   names(coef) <- "coef"
   out <- c(list(coef), out)
-
-  if (!identical(grps, "")) {
-    out <- c(list(as.data.frame(stat[grps], stringsAsFactors = FALSE)), out)
-  }
 
   if (!isFALSE(deff)) {
     deff <- data.frame(matrix(survey::deff(stat), ncol = out_width))
@@ -136,12 +130,12 @@ get_var_est <- function(
     out <- c(out, list(deff))
   }
 
-  as_srvyr_result_df(dplyr::bind_cols(out))
+  as_srvyr_result_df(do.call(cbind, out))
 }
 
 # Largely the same as get_var_est(), but need to handle the fact that there can be
 # multiple quantiles and that CI's are stored slightly differently.
-get_var_est_quantile <- function(stat, vartype, q, grps = "", level = 0.95, df = Inf) {
+get_var_est_quantile <- function(stat, vartype, q, level = 0.95, df = Inf) {
   qnames <- paste0("_q", gsub("\\.", "", formatC(q * 100, width = 2, flag = "0")))
   out_width <- length(qnames)
   out <- lapply(vartype, function(vvv) {
@@ -180,12 +174,36 @@ get_var_est_quantile <- function(stat, vartype, q, grps = "", level = 0.95, df =
   out <- lapply(out, as.data.frame)
   out <- c(list(coef), out)
 
-  if (!identical(grps, "")) {
-    out <- c(list(as.data.frame(stat[grps])), out)
-  }
-
   as_srvyr_result_df(dplyr::bind_cols(out))
 }
+
+get_empty_var_est <- function(vartype, level = 0.95, deff = FALSE) {
+  out <- lapply(vartype, function(vvv) {
+    if (vvv == "se") {
+      data.frame("_se" = NA, check.names = FALSE)
+    } else if (vvv == "ci") {
+      if (length(level) == 1) {
+        ci <- data.frame("_low" = NA, "_upp" = NA, check.names = FALSE)
+      } else {
+        nms <- paste0(c("_low", "_upp"), rep(level, each = 2) * 100)
+        ci <- stats::setNames(as.data.frame(lapply(nms, NA)), nms)
+      }
+      ci
+    } else if (vvv == "var") {
+      data.frame("_var" = NA, check.names = FALSE)
+    } else if (vvv == "cv") {
+      data.frame("_cv" = NA, check.names = FALSE)
+    } else {
+      stop(paste0("Unexpected vartype ", vvv))
+    }
+  })
+  out <- list(data.frame(coef = NA), out)
+  if (!isFALSE(deff)) {
+    out[["_deff"]] <- NA
+  }
+  as_srvyr_result_df(do.call(cbind, out))
+}
+
 
 stop_for_factor <- function(x) {
   if (is.factor(x)) {

@@ -718,17 +718,19 @@ test_that("unweighted allows named arguments",  {
 
   expect_equal(
     dclus1 %>% summarize(n = unweighted(a = n())),
-    tibble(na = 183)
+    tibble::tibble(na = 183)
   )
 
   expect_equal(
     dclus1 %>% summarize(unweighted(a = n())),
-    tibble(a = 183)
+    tibble::tibble(a = 183)
   )
 })
 
 test_that(
   "unweighted works with filtered data in calibrated or PPS designs", {
+
+    # First check for calibrated designs
     data(api, package = "survey")
     dclus1 <- as_survey_design(apiclus1, id = dnum, weights = pw, fpc = fpc)
 
@@ -739,6 +741,7 @@ test_that(
                          sample.margins = list(~stype,~sch.wide),
                          population.margins = list(pop.types, pop.schwide))
 
+    # Check when filtering returns at least one row
     out_calib <- raked_design %>%
       filter(sch.wide == "Yes") %>%
       group_by(stype) %>%
@@ -752,11 +755,28 @@ test_that(
     expect_equal(out_calib[['sample_size']],
                  out_noncalib[['sample_size']])
 
+    # Check when filtering returns zero rows
+
+    out_calib <- raked_design %>%
+      filter(sch.wide == "Fake Category") %>%
+      summarize(sample_size = unweighted(n()))
+
+    out_noncalib <- dclus1 %>%
+      filter(sch.wide == "Fake Category") %>%
+      summarize(sample_size = unweighted(n()))
+
+    expect_equal(out_calib[['sample_size']],
+                 expected = 0)
+    expect_equal(out_noncalib[['sample_size']],
+                 expected = 0)
+
+    # Next check for PPS design
     data(election, package = "survey")
 
     non_pps_design <- as_survey_design(election_pps, id = 1)
     pps_design <- as_survey_design(election_pps, id = 1, fpc = p, pps = "brewer")
 
+    # Check correct results when filtering returns at least one row
     out_nonpps <- non_pps_design %>%
       filter(County == "Los Angeles") %>%
       summarize(n_rows = unweighted(n()))
@@ -767,6 +787,20 @@ test_that(
 
     expect_equal(out_pps[['n_rows']],
                  out_nonpps[['n_rows']])
+
+    # Check correct results when filtering returns zero rows
+    out_nonpps <- non_pps_design %>%
+      filter(County == "Fake Category") %>%
+      summarize(n_rows = unweighted(n()))
+
+    out_pps <- pps_design %>%
+      filter(County == "Fake Category") %>%
+      summarize(n_rows = unweighted(n()))
+
+    expect_equal(out_pps[['n_rows']],
+                 expected = 0)
+    expect_equal(out_nonpps[['n_rows']],
+                 expected = 0)
   }
 )
 
@@ -793,6 +827,39 @@ test_that(
     expect_equal(t2, t3)
   }
 )
+
+test_that("survey_ci_prop handles no row case (#156)", {
+  issue156_data <- data.frame(
+    groups = rep(c("a", "b"), 50),
+    value = rep(NA_character_, 100)
+  )
+
+  issue156_survey <- srvyr::as_survey(issue156_data, strata = groups)
+
+  results <- issue156_survey %>%
+    dplyr::group_by(dplyr::across(dplyr::any_of("groups"))) %>%
+    dplyr::filter(!is.na(value), .preserve = T) %>%
+    srvyr::summarise(x = srvyr::survey_prop(proportion = T))
+
+  expect_equal(names(results), c("groups", "x", "x_se"))
+  expect_equal(results$groups, c("a", "b"))
+  expect_true(all(is.na(results$x)))
+  expect_true(all(is.na(results$x_se)))
+
+
+  results <- issue156_survey %>%
+    dplyr::group_by(dplyr::across(dplyr::any_of("groups"))) %>%
+    dplyr::filter(!is.na(value), .preserve = T) %>%
+    srvyr::summarise(x = srvyr::survey_prop(vartype = c("ci", "se"), proportion = T))
+
+  expect_equal(names(results), c("groups", "x", "x_low", "x_upp", "x_se"))
+  expect_equal(results$groups, c("a", "b"))
+  expect_true(all(is.na(results$x)))
+  expect_true(all(is.na(results$x_low)))
+  expect_true(all(is.na(results$x_upp)))
+  expect_true(all(is.na(results$x_se)))
+})
+
 
 ################################################################################
 # survey_old_quantile
