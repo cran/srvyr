@@ -1,17 +1,15 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# srvyr <img src="tools/logo.png" align="right" height="149" width="149"/>
+# srvyr <img src="man/figures/logo.png" align="right" height="149" width="149"/>
 
 <!-- badges: start -->
 
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/srvyr)](https://CRAN.R-project.org/package=srvyr)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/srvyr)](https://CRAN.R-project.org/package=srvyr)
 [![R build
 status](https://github.com/gergness/srvyr/workflows/R-CMD-check/badge.svg)](https://github.com/gergness/srvyr/actions)
 [![Codecov test
 coverage](https://codecov.io/gh/gergness/srvyr/branch/main/graph/badge.svg)](https://app.codecov.io/gh/gergness/srvyr?branch=main)
-[![Documentation via
-pkgdown](tools/pkgdownshield.svg)](http://gdfe.co/srvyr/)
 <!-- badges: end -->
 
 srvyr brings parts of [dplyr’s](https://github.com/tidyverse/dplyr/)
@@ -107,6 +105,10 @@ summary(my_model)
 #> Number of Fisher Scoring iterations: 2
 ```
 
+## Cheat Sheet
+
+<a href="https://github.com/gergness/srvyr/blob/main/cheatsheet/srvyr.pdf"><img src="man/figures/srvyr-cheatsheet-preview.png" width="630" height="252"/></a><br>
+
 ## Learning more
 
 Here are some free resources put together by the community about srvyr:
@@ -115,8 +117,11 @@ Here are some free resources put together by the community about srvyr:
   - srvyr’s included vignette [“srvyr vs
     survey”](http://gdfe.co/srvyr/articles/srvyr-vs-survey.html) and the
     rest of the [pkgdown website](http://gdfe.co/srvyr/)
-  - Stephanie Zimmer & Rebecca Powell’s [2021 AAPOR Workshop “Tidy
-    Survey Analysis in R using the srvyr
+  - Stephanie Zimmer, Rebecca Powell and Isabella Velásquez’s book
+    [Exploring Complex Survey Data Analysis Using
+    R](https://www.routledge.com/Exploring-Complex-Survey-Data-Analysis-Using-R-A-Tidy-Introduction-with-srvyr-and-survey/Zimmer-Powell-Velasquez/p/book/9781032302867?srsltid=AfmBOordog836itDOABXbcZM2BAE1WdJ6muu8sjgAIpO7WFu-x00D6HQ)
+    (releasing in November 2024). See also their [2021 AAPOR Workshop
+    “Tidy Survey Analysis in R using the srvyr
     Package”](https://github.com/szimmer/tidy-survey-aapor-2021)
   - “The Epidemiologist R Handbook”, by Neale Batra et al. has a
     [chapter on survey analysis](https://epirhandbook.com/en/) with
@@ -132,10 +137,6 @@ Here are some free resources put together by the community about srvyr:
     by Carrie Wright, Michael Ontiveros, Leah Jager, Margaret Taub, and
     Stephanie Hicks is a detailed case study that includes using srvyr
     to analyze the National Youth Tobacco Survey.
-  - [“How to plot Likert scales with a weighted survey in a dplyr
-    friendly
-    way”](https://towardsdatascience.com/how-to-plot-likert-scales-with-a-weighted-survey-in-a-dplyr-friendly-way-68df600881a)
-    by Francisco Suárez Salas
   - The tidycensus package vignette [“Working with Census
     microdata”](https://walker-data.com/tidycensus/articles/pums-data.html)
     includes information about using the weights from the ACS retrieved
@@ -157,7 +158,7 @@ Here are some free resources put together by the community about srvyr:
     Editions
   - “Survey weighting is a mess” is the opening to Andrew Gelman’s
     [“Struggles with Survey Weighting and Regression
-    Modeling”](http://www.stat.columbia.edu/~gelman/research/published/STS226.pdf)
+    Modeling”](https://sites.stat.columbia.edu/gelman/research/published/STS226.pdf)
   - Anthony Damico’s website [“Analyze Survey Data for
     Free”](https://asdfree.com) has the weight specifications for a wide
     variety of public use survey datasets.
@@ -174,8 +175,24 @@ Here are some free resources put together by the community about srvyr:
   - *En español:* [“Usando R para jugar con los microdatos del
     INEGI”](https://medium.com/tacosdedatos/usando-r-para-sacar-información-de-los-microdatos-del-inegi-b21b6946cf4f)
     by Claudio Daniel Pacheco Castro
-  - *Tiếng Việt:* [“Dịch tễ học ứng dụng và y tế công cộng với
-    R”](https://epirhandbook.com/vn/survey-analysis.html)
+  - Chapter 26 of the The Epidemiologist R Handbook, translated:
+    - *En français:* [Analyse
+      d’enquête](https://epirhandbook.com/fr/new_pages/survey_analysis.fr.html)
+    - *Tiếng Việt:* [Phân tích khảo
+      sát](https://epirhandbook.com/vn/new_pages/survey_analysis.vn.html)
+    - *En español:* [Análisis de
+      encuestas](https://epirhandbook.com/es/new_pages/survey_analysis.es.html)
+    - *日本語で:*
+      [標本調査データ分析](https://epirhandbook.com/jp/new_pages/survey_analysis.jp.html)
+    - *Em português:* [Analises de pesquisa de questionários
+      (survey)](https://epirhandbook.com/pt/new_pages/survey_analysis.pt.html)
+    - *Türkçe:* [Anket
+      analizi](https://epirhandbook.com/tr/new_pages/survey_analysis.tr.html)
+    - *На русском языке:* [Анализ
+      опросов](https://epirhandbook.com/ru/new_pages/survey_analysis.ru.html)
+  - *På norsk:* [Data med vekter i
+    R](https://oyvindsolheim.com/code/vekter%20i%20r/) by Øyvind Bugge
+    Solheim
 - **Other cool stuff that uses srvyr**
   - A (free) graphical interface allowing exploratory data analysis of
     survey data without writing code: [iNZight](https://inzight.nz/)
@@ -210,24 +227,10 @@ issue](https://github.com/gergness/srvyr/issues/127)!
 
 ## What people are saying about srvyr
 
-> minimal changes to my \#r \#dplyr script to incorporate survey
-> weights, thanks to the amazing \#srvyr and \#survey packages. Thanks
-> to @gregfreedman & @tslumley. Integrates soooo nicely into tidyverse
->
-> –<cite>Brian Guay ([@BrianMGuay on Jun 16,
-> 2021](https://twitter.com/brianmguay/status/1405224564196622338))</cite>
-
-> Spending my afternoon using `srvyr` for tidy analysis of weighted
-> survey data in \#rstats and it’s so elegant. Vignette here:
-> <https://CRAN.R-project.org/package=srvyr/vignettes/srvyr-vs-survey.html>
->
-> –<cite>Chris Skovron ([@cskovron on Nov 20,
-> 2018](https://twitter.com/cskovron/status/1065015904784842752))</cite>
-
 > 1.  Yay!
 >
 > –<cite>Thomas Lumley, [in the Biased and Inefficient
-> blog](http://notstatschat.tumblr.com/post/161225885311/pipeable-survey-analysis-in-r)</cite>
+> blog](https://notstatschat.tumblr.com/post/161225885311/pipeable-survey-analysis-in-r)</cite>
 
 ## Contributing
 
@@ -240,5 +243,5 @@ as all participants are required to abide by its terms.
 
 If you’re unfamiliar with contributing to an R package, I recommend the
 guides provided by Rstudio’s tidyverse team, such as Jim Hester’s [blog
-post](https://www.tidyverse.org/blog/2017/08/contributing/) or Hadley
+post](https://tidyverse.org/blog/2017/08/contributing/) or Hadley
 Wickham’s [R packages book](https://r-pkgs.org/).

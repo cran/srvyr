@@ -241,5 +241,5 @@ sdr_srvyr <- cbind(sdr_sample, as.data.frame(sdr_factors)) %>%
                 degf = 4)
 
 test_that("as_survey_rep accepts user-specified degf", {
-  expect_equal(degf(sdr_srvyr), 4)
+  expect_equivalent(degf(sdr_srvyr), 4)
 })

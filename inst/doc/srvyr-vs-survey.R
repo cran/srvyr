@@ -152,11 +152,11 @@ strat_design %>%
   summarize(api00_mn = survey_mean(api00))
 
 ## ----message = FALSE, eval=FALSE----------------------------------------------
-#  # BAD DON'T DO THIS!
-#  strat_design %>%
-#    group_by(awards) %>%
-#    summarize(percentage = 100 * survey_mean(vartype = "var"))
-#  # VARIANCE IS WRONG
+# # BAD DON'T DO THIS!
+# strat_design %>%
+#   group_by(awards) %>%
+#   summarize(percentage = 100 * survey_mean(vartype = "var"))
+# # VARIANCE IS WRONG
 
 ## ----message = FALSE----------------------------------------------------------
 mean_with_ci <- function(.data, var) {

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Greg Freedman Ellis" />
 
-<meta name="date" content="2024-08-19" />
+<meta name="date" content="2026-02-01" />
 
 <title>Databases in srvyr</title>
 
@@ -50,6 +50,7 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -340,12 +341,12 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Databases in srvyr</h1>
 <h4 class="author">Greg Freedman Ellis</h4>
-<h4 class="date">2024-08-19</h4>
+<h4 class="date">2026-02-01</h4>
 
 
 
 <pre><code>## Loading required package: RSQLite</code></pre>
-<pre><code>## Warning: package &#39;RSQLite&#39; was built under R version 4.3.3</code></pre>
+<pre><code>## Warning: package &#39;RSQLite&#39; was built under R version 4.5.2</code></pre>
 <p>Srvyr 0.3 has a completely rewritten database backend. Using
 databases that are already stored dplyr’s <code>tbl_lazy</code> objects
 is now just as easy as working with data stored in regular R data.frames
@@ -421,8 +422,8 @@ is too small for this to be a problem).</p>
 <pre><code>## Warning: Missing values are always removed in SQL aggregation functions.
 ## Use `na.rm = TRUE` to silence this warning
 ## This warning is displayed once every 8 hours.</code></pre>
-<pre><code>## # Source:   SQL [2 x 2]
-## # Database: sqlite 3.46.0 [:memory:]
+<pre><code>## # Source:   SQL [?? x 2]
+## # Database: sqlite 3.51.1 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1  1.14
@@ -458,10 +459,10 @@ some databases. .</p>
 <span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co"># Creating the variable separately works as an integer works though</span></span>
 <span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>acs_m_db <span class="sc">%&gt;%</span> </span>
 <span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>  <span class="fu">group_by</span>(sex) <span class="sc">%&gt;%</span></span>
-<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hicov =</span> <span class="fu">ifelse</span>(hicov <span class="sc">==</span> <span class="dv">1</span>, 1L, 0L)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hicov =</span> <span class="fu">ifelse</span>(hicov <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span><span class="dt">L</span>, <span class="dv">0</span><span class="dt">L</span>)) <span class="sc">%&gt;%</span></span>
 <span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
-<pre><code>## # Source:   SQL [2 x 2]
-## # Database: sqlite 3.46.0 [:memory:]
+<pre><code>## # Source:   SQL [?? x 2]
+## # Database: sqlite 3.51.1 [:memory:]
 ##     sex hicov
 ##   &lt;int&gt; &lt;dbl&gt;
 ## 1     1 0.858
@@ -503,8 +504,8 @@ create a new variable in the data.frame using it.</p>
 <span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>                                              <span class="fu">ifelse</span>(agep <span class="sc">&gt;=</span> <span class="dv">65</span>, <span class="st">&quot;65+&quot;</span>, <span class="cn">NA</span>)))))) <span class="sc">%&gt;%</span></span>
 <span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>  <span class="fu">group_by</span>(agecat) <span class="sc">%&gt;%</span> </span>
 <span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">hicov =</span> <span class="fu">mean</span>(hicov))</span></code></pre></div>
-<pre><code>## # Source:   SQL [5 x 2]
-## # Database: sqlite 3.46.0 [:memory:]
+<pre><code>## # Source:   SQL [?? x 2]
+## # Database: sqlite 3.51.1 [:memory:]
 ##   agecat hicov
 ##   &lt;chr&gt;  &lt;dbl&gt;
 ## 1 0-18    1.09
@@ -596,7 +597,7 @@ sex.</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># You can calculate the population of the united states #</span></span>
 <span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="co"># by state</span></span>
 <span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>acs_m_db_svy <span class="sc">%&gt;%</span></span>
-<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">one =</span> 1L) <span class="sc">%&gt;%</span> <span class="co"># Note that because of weird behavior of MonetDB, need to use 1L not just 1</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">one =</span> <span class="dv">1</span><span class="dt">L</span>) <span class="sc">%&gt;%</span> <span class="co"># Note that because of weird behavior of MonetDB, need to use 1L not just 1</span></span>
 <span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>  <span class="fu">group_by</span>(st) <span class="sc">%&gt;%</span> </span>
 <span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">count =</span> <span class="fu">survey_total</span>(one))</span></code></pre></div>
 <pre><code>## Adding missing grouping variables: `st`</code></pre>

@@ -136,7 +136,6 @@ designs with simple random sampling at phase one and stratified randoms sampling
 \description{
 srvyr has updated it's standard evaluation semantics to match dplyr 0.7, so
 these underscore functions are no longer required (but are still supported
-for backward compatibility reasons). See \code{\link[dplyr]{se-deprecated}} or the
-dplyr vignette on programming (\code{vignette("programming", package =
-"dplyr")}) for more details.
+for backward compatibility reasons). As the \code{dplyr} package has removed
+support for underscore functions, srvyr will soon.
 }

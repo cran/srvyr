@@ -460,16 +460,26 @@ survey_quantile <- function(
 #' @export
 #' @rdname survey_quantile
 survey_median <- function(
-  x,
-  na.rm = FALSE,
-  vartype = c("se", "ci", "var", "cv"),
-  level = 0.95,
-  interval_type = c("mean", "beta","xlogit", "asin", "score", "quantile"),
-  qrule = c("math","school","shahvaish","hf1","hf2","hf3",
-            "hf4","hf5","hf6","hf7","hf8","hf9"),
-  df = NULL,
-  ...
+    x,
+    na.rm = FALSE,
+    vartype = c("se", "ci", "var", "cv"),
+    level = 0.95,
+    interval_type = c("mean", "beta", "xlogit", "asin", "score", "quantile"),
+    qrule = c("math","school","shahvaish","hf1","hf2","hf3",
+              "hf4","hf5","hf6","hf7","hf8","hf9"),
+    df = NULL,
+    ...
 ) {
+
+  dots <- list(...)
+  if (!is.null(dots$quantiles)) {
+    warning(
+      "`quantiles` is ignored in survey_median(); ",
+      "use survey_quantile() to compute specific quantiles.",
+      call. = FALSE
+    )
+  }
+
   .svy <- cur_svy()
 
   if (!is.null(vartype)) {
